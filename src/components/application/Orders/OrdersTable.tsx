@@ -87,10 +87,13 @@ export default function OrdersTable() {
         },
       },
       {
-        field: "cidade",
-        headerName: "Cidade",
+        field: "recebimento",
+        headerName: "Recebimento",
         flex: 0.9,
-        valueGetter: (_, row) => row.address?.cidade || "-",
+        valueGetter: (_, row) =>
+          row.deliveryMethod === "pickup"
+            ? "Retirada na loja"
+            : row.address?.cidade || "-",
       },
       {
         field: "items",

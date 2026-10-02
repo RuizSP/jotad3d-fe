@@ -15,6 +15,11 @@ import {
   Alert,
   Chip,
   CircularProgress,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
 } from "@mui/material";
 import {
   CheckCircle2,
@@ -31,7 +36,7 @@ import { useForm } from "../../../hooks/useForm";
 import { ordersService } from "../../../services/orders.service";
 import { useCreateOrder } from "../../../hooks/useOrders";
 import { cepService } from "../../../services/cep.service";
-import type { Order } from "../../../shared/interfaces/Order";
+import type { DeliveryMethod, Order } from "../../../shared/interfaces/Order";
 import ColorSwatch from "../../../components/common/ColorSwatch";
 import CopyButton from "../../../components/ui/CopyButton";
 import { useOrderTracking } from "../../../providers/OrderTrackingProvider";
@@ -40,6 +45,7 @@ interface CheckoutFormData {
   customerName: string;
   whatsapp: string;
   email: string;
+  deliveryMethod: DeliveryMethod;
   cep: string;
   rua: string;
   numero: string;
@@ -57,11 +63,34 @@ const checkoutValidationSchema = Yup.object().shape({
     .required("Informe seu WhatsApp")
     .min(8, "Telefone inválido"),
   email: Yup.string().email("E-mail inválido"),
-  cep: Yup.string().required("Informe o CEP").min(8, "CEP inválido"),
-  rua: Yup.string().required("Informe a rua/endereço"),
-  numero: Yup.string().required("Informe o número"),
-  bairro: Yup.string().required("Informe o bairro"),
-  cidade: Yup.string().required("Informe a cidade"),
+  deliveryMethod: Yup.mixed<DeliveryMethod>()
+    .oneOf(["delivery", "pickup"])
+    .required(),
+  cep: Yup.string().when("deliveryMethod", {
+    is: "delivery",
+    then: (schema) => schema.required("Informe o CEP").min(8, "CEP inválido"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  rua: Yup.string().when("deliveryMethod", {
+    is: "delivery",
+    then: (schema) => schema.required("Informe a rua/endereço"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  numero: Yup.string().when("deliveryMethod", {
+    is: "delivery",
+    then: (schema) => schema.required("Informe o número"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  bairro: Yup.string().when("deliveryMethod", {
+    is: "delivery",
+    then: (schema) => schema.required("Informe o bairro"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  cidade: Yup.string().when("deliveryMethod", {
+    is: "delivery",
+    then: (schema) => schema.required("Informe a cidade"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
   complemento: Yup.string(),
   notes: Yup.string(),
 });
@@ -103,6 +132,7 @@ export default function Checkout() {
         customerName: "",
         whatsapp: "",
         email: "",
+        deliveryMethod: "delivery",
         cep: "",
         rua: "",
         numero: "",
@@ -114,7 +144,7 @@ export default function Checkout() {
       schema: checkoutValidationSchema,
     });
 
-  const steps = ["Identificação", "Endereço de Entrega", "Confirmar Pedido"];
+  const steps = ["Identificação", "Recebimento", "Confirmar Pedido"];
 
   const handleNext = async () => {
     if (activeStep === 0) {
@@ -129,15 +159,9 @@ export default function Checkout() {
       }
       setActiveStep(1);
     } else if (activeStep === 1) {
-      if (
-        !data.cep ||
-        !data.rua ||
-        !data.numero ||
-        !data.bairro ||
-        !data.cidade
-      ) {
-        await validation();
-        return;
+      if (data.deliveryMethod === "delivery") {
+        const isValid = await validation();
+        if (!isValid) return;
       }
       setActiveStep(2);
     } else if (activeStep === 2) {
@@ -152,14 +176,18 @@ export default function Checkout() {
           customerName: data.customerName,
           whatsapp: data.whatsapp,
           email: data.email || undefined,
-          address: {
-            cep: data.cep,
-            rua: data.rua,
-            numero: data.numero,
-            bairro: data.bairro,
-            cidade: data.cidade,
-            complemento: data.complemento || undefined,
-          },
+          deliveryMethod: data.deliveryMethod,
+          address:
+            data.deliveryMethod === "delivery"
+              ? {
+                  cep: data.cep,
+                  rua: data.rua,
+                  numero: data.numero,
+                  bairro: data.bairro,
+                  cidade: data.cidade,
+                  complemento: data.complemento || undefined,
+                }
+              : null,
           items: items.map((i) => ({
             productId: i.id,
             productName: i.name,
@@ -450,68 +478,111 @@ export default function Checkout() {
                     <Stack spacing={2.5}>
                       <Box>
                         <Typography variant="h6" fontWeight="800">
-                          Endereço para Entrega
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Informe onde deseja receber suas peças 3D.
+                          Como deseja receber o pedido?
                         </Typography>
                       </Box>
 
-                      <TextField
-                        label="CEP *"
-                        placeholder="00000-000 (preenchimento automático)"
-                        value={data.cep}
-                        onChange={(e) => handleCepChange(e.target.value)}
-                        InputProps={{
-                          endAdornment: isSearchingCep ? (
-                            <CircularProgress size={18} color="secondary" />
-                          ) : null,
-                        }}
-                        {...validationErrors("cep")}
-                      />
-
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 8 }}>
-                          <TextField
-                            label="Rua / Logradouro *"
-                            value={data.rua}
-                            onChange={(e) => changeValue("rua", e.target.value)}
-                            {...validationErrors("rua")}
+                      <FormControl>
+                        <FormLabel id="delivery-method-label">
+                          Forma de recebimento
+                        </FormLabel>
+                        <RadioGroup
+                          aria-labelledby="delivery-method-label"
+                          name="delivery-method"
+                          value={data.deliveryMethod}
+                          onChange={(event) =>
+                            changeValue(
+                              "deliveryMethod",
+                              event.target.value as DeliveryMethod,
+                            )
+                          }
+                        >
+                          <FormControlLabel
+                            value="delivery"
+                            control={<Radio />}
+                            label="Receber no meu endereço"
                           />
-                        </Grid>
-                        <Grid size={{ xs: 4 }}>
+                          <FormControlLabel
+                            value="pickup"
+                            control={<Radio />}
+                            label="Retirar no endereço da loja"
+                          />
+                        </RadioGroup>
+                      </FormControl>
+
+                      {data.deliveryMethod === "delivery" ? (
+                        <>
+                          <Typography variant="body2" color="text.secondary">
+                            Informe onde deseja receber suas peças 3D.
+                          </Typography>
                           <TextField
-                            label="Número *"
-                            value={data.numero}
+                            label="CEP *"
+                            placeholder="00000-000 (preenchimento automático)"
+                            value={data.cep}
+                            onChange={(e) => handleCepChange(e.target.value)}
+                            InputProps={{
+                              endAdornment: isSearchingCep ? (
+                                <CircularProgress size={18} color="secondary" />
+                              ) : null,
+                            }}
+                            {...validationErrors("cep")}
+                          />
+
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 8 }}>
+                              <TextField
+                                label="Rua / Logradouro *"
+                                value={data.rua}
+                                onChange={(e) =>
+                                  changeValue("rua", e.target.value)
+                                }
+                                {...validationErrors("rua")}
+                              />
+                            </Grid>
+                            <Grid size={{ xs: 4 }}>
+                              <TextField
+                                label="Número *"
+                                value={data.numero}
+                                onChange={(e) =>
+                                  changeValue("numero", e.target.value)
+                                }
+                                {...validationErrors("numero")}
+                              />
+                            </Grid>
+                          </Grid>
+
+                          <TextField
+                            label="Bairro *"
+                            value={data.bairro}
                             onChange={(e) =>
-                              changeValue("numero", e.target.value)
+                              changeValue("bairro", e.target.value)
                             }
-                            {...validationErrors("numero")}
+                            {...validationErrors("bairro")}
                           />
-                        </Grid>
-                      </Grid>
 
-                      <TextField
-                        label="Bairro *"
-                        value={data.bairro}
-                        onChange={(e) => changeValue("bairro", e.target.value)}
-                        {...validationErrors("bairro")}
-                      />
+                          <TextField
+                            label="Cidade *"
+                            value={data.cidade}
+                            onChange={(e) =>
+                              changeValue("cidade", e.target.value)
+                            }
+                            {...validationErrors("cidade")}
+                          />
 
-                      <TextField
-                        label="Cidade *"
-                        value={data.cidade}
-                        onChange={(e) => changeValue("cidade", e.target.value)}
-                        {...validationErrors("cidade")}
-                      />
-
-                      <TextField
-                        label="Complemento (Apto, bloco, referência)"
-                        value={data.complemento}
-                        onChange={(e) =>
-                          changeValue("complemento", e.target.value)
-                        }
-                      />
+                          <TextField
+                            label="Complemento (Apto, bloco, referência)"
+                            value={data.complemento}
+                            onChange={(e) =>
+                              changeValue("complemento", e.target.value)
+                            }
+                          />
+                        </>
+                      ) : (
+                        <Alert severity="info" sx={{ borderRadius: 2 }}>
+                          Não é necessário informar endereço. O local e o
+                          horário da retirada serão combinados pelo WhatsApp.
+                        </Alert>
+                      )}
                     </Stack>
                   )}
 
@@ -557,15 +628,24 @@ export default function Checkout() {
                           textTransform="uppercase"
                           color="text.secondary"
                         >
-                          Endereço de Entrega
+                          Forma de recebimento
                         </Typography>
-                        <Typography variant="body2">
-                          {data.rua}, {data.numero}
-                          {data.complemento ? ` (${data.complemento})` : ""}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {data.bairro} - {data.cidade} • CEP: {data.cep}
-                        </Typography>
+                        {data.deliveryMethod === "pickup" ? (
+                          <Typography variant="body2">
+                            Retirada no endereço da loja; local e horário serão
+                            combinados pelo WhatsApp.
+                          </Typography>
+                        ) : (
+                          <>
+                            <Typography variant="body2">
+                              {data.rua}, {data.numero}
+                              {data.complemento ? ` (${data.complemento})` : ""}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {data.bairro} - {data.cidade} • CEP: {data.cep}
+                            </Typography>
+                          </>
+                        )}
                       </Paper>
 
                       <TextField

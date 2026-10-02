@@ -1,5 +1,9 @@
 import { supabase } from "./supabase";
-import type { Order, OrderStatus } from "../shared/interfaces/Order";
+import type {
+  DeliveryMethod,
+  Order,
+  OrderStatus,
+} from "../shared/interfaces/Order";
 
 interface SupabaseOrderItemRow {
   produto_id: string | number | null;
@@ -14,6 +18,7 @@ interface SupabaseOrderRow {
   access_code: string | null;
   order_number: number | null;
   status: OrderStatus | null;
+  delivery_method?: DeliveryMethod | null;
   concluido: boolean | null;
   pronto_para_entrega: boolean | null;
   cliente_nome: string;
@@ -66,14 +71,6 @@ const mapOrder = (order: SupabaseOrderRow): Order => {
     customerName: order.cliente_nome,
     whatsapp: order.whatsapp || "",
     email: order.email || "",
-    address: {
-      cep: order.cep || "",
-      rua: order.endereco || "",
-      numero: order.numero || "",
-      bairro: order.bairro || "",
-      cidade: order.cidade || "",
-      complemento: order.complemento || "",
-    },
     items: (order.pedido_itens || []).map((item) => ({
       productId: String(item.produto_id ?? ""),
       productName: item.produtos?.nome || "Peça 3D",
@@ -87,6 +84,18 @@ const mapOrder = (order: SupabaseOrderRow): Order => {
     paid: Boolean(order.pago),
     notes: order.observacoes || "",
     createdAt: order.data_criacao || "",
+    deliveryMethod: order.delivery_method || "delivery",
+    address:
+      order.delivery_method === "pickup"
+        ? null
+        : {
+            cep: order.cep || "",
+            rua: order.endereco || "",
+            numero: order.numero || "",
+            bairro: order.bairro || "",
+            cidade: order.cidade || "",
+            complemento: order.complemento || "",
+          },
   };
 };
 
@@ -114,15 +123,16 @@ export const ordersService = {
       .insert({
         access_code: accessCode,
         status: "recebido",
+        delivery_method: orderInput.deliveryMethod,
         cliente_nome: orderInput.customerName,
         whatsapp: orderInput.whatsapp,
         email: orderInput.email || null,
-        cep: orderInput.address.cep,
-        endereco: orderInput.address.rua,
-        numero: orderInput.address.numero,
-        bairro: orderInput.address.bairro,
-        cidade: orderInput.address.cidade,
-        complemento: orderInput.address.complemento || null,
+        cep: orderInput.address?.cep || null,
+        endereco: orderInput.address?.rua || null,
+        numero: orderInput.address?.numero || null,
+        bairro: orderInput.address?.bairro || null,
+        cidade: orderInput.address?.cidade || "Retirada na loja",
+        complemento: orderInput.address?.complemento || null,
         valor_total: orderInput.totalAmount,
         pago: false,
         pronto_para_entrega: false,
@@ -220,6 +230,10 @@ export const ordersService = {
 
   buildWhatsAppMessage(order: Order, companyNumber: string): string {
     const cleanPhone = companyNumber.replace(/\D/g, "");
+    const receivingDetails =
+      order.deliveryMethod === "pickup"
+        ? `*Recebimento:* Retirada no endereço da loja. O endereço será combinado pelo WhatsApp.%0A%0A`
+        : `*Endereço de Entrega:*%0A${order.address?.rua}, ${order.address?.numero}${order.address?.complemento ? ` (${order.address.complemento})` : ""} - ${order.address?.bairro}%0A${order.address?.cidade} - CEP: ${order.address?.cep}%0A%0A`;
     const itemsList = order.items
       .map(
         (i) =>
@@ -234,7 +248,7 @@ export const ordersService = {
       `*Cliente:* ${order.customerName}%0A` +
       `*WhatsApp:* ${order.whatsapp}%0A%0A` +
       `*Itens:*%0A${itemsList}%0A%0A` +
-      `*Endereço de Entrega:*%0A${order.address.rua}, ${order.address.numero}${order.address.complemento ? ` (${order.address.complemento})` : ""} - ${order.address.bairro}%0A${order.address.cidade} - CEP: ${order.address.cep}%0A%0A` +
+      receivingDetails +
       `*Valor Total:* R$ ${order.totalAmount.toFixed(2)}%0A%0A` +
       `Gostaria de confirmar o pedido e combinar o pagamento!`;
 

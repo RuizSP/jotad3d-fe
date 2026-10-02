@@ -339,25 +339,36 @@ export default function OrderTracking() {
 
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="subtitle2" fontWeight="800" gutterBottom>
-                    Destino da Entrega
+                    {order.deliveryMethod === "pickup"
+                      ? "Retirada na loja"
+                      : "Destino da Entrega"}
                   </Typography>
                   <Box p={2} borderRadius={2} bgcolor="background.default">
-                    <Box display="flex" alignItems="center" gap={1} mb={1}>
-                      <MapPin size={16} />
-                      <Typography variant="body2" fontWeight="700">
-                        {order.address.cidade}
-                      </Typography>
-                    </Box>
-                    {order.address.rua && (
+                    {order.deliveryMethod === "pickup" ? (
                       <Typography variant="body2" color="text.secondary">
-                        {order.address.rua}, {order.address.numero}
-                        {order.address.complemento
-                          ? ` (${order.address.complemento})`
-                          : ""}
-                        <br />
-                        {order.address.bairro} • CEP {order.address.cep}
+                        O local e o horário da retirada serão combinados pelo
+                        WhatsApp.
                       </Typography>
-                    )}
+                    ) : order.address ? (
+                      <>
+                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                          <MapPin size={16} />
+                          <Typography variant="body2" fontWeight="700">
+                            {order.address.cidade}
+                          </Typography>
+                        </Box>
+                        {order.address.rua && (
+                          <Typography variant="body2" color="text.secondary">
+                            {order.address.rua}, {order.address.numero}
+                            {order.address.complemento
+                              ? ` (${order.address.complemento})`
+                              : ""}
+                            <br />
+                            {order.address.bairro} • CEP {order.address.cep}
+                          </Typography>
+                        )}
+                      </>
+                    ) : null}
                     <Divider sx={{ my: 1.5 }} />
                     <Box
                       display="flex"
