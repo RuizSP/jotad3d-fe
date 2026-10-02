@@ -15,7 +15,7 @@ export interface FilterType<T> {
   appliedValues: T | null;
 }
 
-export const FilterContext = createContext<FilterType<any> | undefined>(
+export const FilterContext = createContext<FilterType<unknown> | undefined>(
   undefined,
 );
 
@@ -30,12 +30,12 @@ export function useFilter<T>() {
 
 export interface FilterApiType<T> {
   changeFilterValues: (data: T) => void;
-  changeFilterValue: (field: string, value: any) => void;
+  changeFilterValue: (field: string, value: unknown) => void;
   applyFilterValues: (data: T) => void;
-  applyFilterValue: (field: string, value: any) => void;
+  applyFilterValue: (field: string, value: unknown) => void;
 }
 
-export const FilterContextApi = createContext<FilterApiType<any> | undefined>(
+export const FilterContextApi = createContext<FilterApiType<never> | undefined>(
   undefined,
 );
 
@@ -59,7 +59,7 @@ export default function FilterProvider<T>({
     setFilterValues((prev) => ({ ...prev, ...data }));
   };
 
-  const changeFilterValue = (field: string, value: any) => {
+  const changeFilterValue = (field: string, value: unknown) => {
     setFilterValues((prev) => {
       if (!prev) return prev;
       return { ...prev, [field]: value };
@@ -69,7 +69,7 @@ export default function FilterProvider<T>({
   const applyFilterValues = (data: T) => {
     setAplliedValues((prev) => ({ ...prev, ...data }));
   };
-  const applyFilterValue = (field: string, value: any) => {
+  const applyFilterValue = (field: string, value: unknown) => {
     setAplliedValues((prev) => {
       if (!prev) return prev;
       return { ...prev, [field]: value };

@@ -3,6 +3,34 @@ import type { Order, OrderStatus } from "../shared/interfaces/Order";
 
 const LOCAL_STORAGE_ORDERS_KEY = "@jotad3d:orders";
 
+interface SupabaseOrderItemRow {
+  produto_id: string | number | null;
+  produtos?: { nome: string | null; imagem_url: string | null } | null;
+  quantidade: number;
+  preco_unitario: number | string;
+  cor_escolhida: string | null;
+}
+
+interface SupabaseOrderRow {
+  id: string | number;
+  concluido: boolean | null;
+  pronto_para_entrega: boolean | null;
+  cliente_nome: string;
+  whatsapp?: string | null;
+  email?: string | null;
+  cep?: string | null;
+  endereco?: string | null;
+  numero?: string | null;
+  bairro?: string | null;
+  cidade: string | null;
+  complemento?: string | null;
+  pedido_itens?: SupabaseOrderItemRow[] | null;
+  valor_total: number | string;
+  pago: boolean | null;
+  observacoes?: string | null;
+  data_criacao: string | null;
+}
+
 const generateAccessCode = (): string => {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let result = "JD-";
@@ -26,9 +54,11 @@ const saveLocalOrder = (order: Order) => {
     const current = getLocalOrders();
     localStorage.setItem(
       LOCAL_STORAGE_ORDERS_KEY,
-      JSON.stringify([order, ...current])
+      JSON.stringify([order, ...current]),
     );
-  } catch {}
+  } catch {
+    return;
+  }
 };
 
 export const ordersService = {
@@ -41,7 +71,7 @@ export const ordersService = {
           .order("data_criacao", { ascending: false });
 
         if (!error && data && data.length > 0) {
-          return data.map((d: any) => {
+          return data.map((d: SupabaseOrderRow) => {
             let status: OrderStatus = "recebido";
             if (d.concluido) status = "finalizado";
             else if (d.pronto_para_entrega) status = "pronto";
@@ -62,7 +92,7 @@ export const ordersService = {
                 cidade: d.cidade || "",
                 complemento: d.complemento || "",
               },
-              items: (d.pedido_itens || []).map((it: any) => ({
+              items: (d.pedido_itens || []).map((it: SupabaseOrderItemRow) => ({
                 productId: String(it.produto_id),
                 productName: it.produtos?.nome || "Peça 3D",
                 imageUrl: it.produtos?.imagem_url || "",
@@ -78,13 +108,20 @@ export const ordersService = {
             };
           });
         }
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao carregar pedidos do Supabase.", error);
+      }
     }
 
     return getLocalOrders();
   },
 
-  async create(orderInput: Omit<Order, "id" | "accessCode" | "orderNumber" | "createdAt" | "status" | "paid">): Promise<Order> {
+  async create(
+    orderInput: Omit<
+      Order,
+      "id" | "accessCode" | "orderNumber" | "createdAt" | "status" | "paid"
+    >,
+  ): Promise<Order> {
     const accessCode = generateAccessCode();
     const orderNumber = Math.floor(1000 + Math.random() * 9000);
     const createdAt = new Date().toISOString();
@@ -124,7 +161,9 @@ export const ordersService = {
 
           const itemsToInsert = orderInput.items.map((item) => ({
             pedido_id: insertedOrder.id,
-            produto_id: item.productId.startsWith("3d-") ? null : item.productId,
+            produto_id: item.productId.startsWith("3d-")
+              ? null
+              : item.productId,
             quantidade: item.quantity,
             preco_unitario: item.unitPrice,
             cor_escolhida: item.color || "Padrão",
@@ -132,13 +171,20 @@ export const ordersService = {
 
           await supabase.from("pedido_itens").insert(itemsToInsert);
         }
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao salvar pedido no Supabase.", error);
+      }
     }
 
     return newOrder;
   },
 
-  async updateStatus(id: string, status: OrderStatus, paid?: boolean, notes?: string): Promise<boolean> {
+  async updateStatus(
+    id: string,
+    status: OrderStatus,
+    paid?: boolean,
+    notes?: string,
+  ): Promise<boolean> {
     const local = getLocalOrders();
     const updated = local.map((o) => {
       if (o.id === id || o.accessCode === id) {
@@ -156,14 +202,17 @@ export const ordersService = {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        const patch: Record<string, any> = {};
+        const patch: Record<string, unknown> = {};
         if (paid !== undefined) patch.pago = paid;
         if (notes !== undefined) patch.observacoes = notes;
-        if (status === "pronto" || status === "finalizado") patch.pronto_para_entrega = true;
+        if (status === "pronto" || status === "finalizado")
+          patch.pronto_para_entrega = true;
         if (status === "finalizado") patch.concluido = true;
 
         await supabase.from("pedidos").update(patch).eq("id", id);
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao atualizar pedido no Supabase.", error);
+      }
     }
 
     return true;
@@ -176,7 +225,7 @@ export const ordersService = {
       (o) =>
         o.accessCode.toUpperCase() === cleanQuery ||
         String(o.orderNumber) === cleanQuery ||
-        o.id === cleanQuery
+        o.id === cleanQuery,
     );
 
     if (foundLocal) {
@@ -211,21 +260,25 @@ export const ordersService = {
               bairro: "",
               cidade: data.cidade,
             },
-            items: (data.pedido_itens || []).map((it: any) => ({
-              productId: String(it.produto_id),
-              productName: "Peça Impressa 3D",
-              imageUrl: "",
-              quantity: it.quantidade,
-              unitPrice: Number(it.preco_unitario),
-              color: it.cor_escolhida,
-            })),
+            items: (data.pedido_itens || []).map(
+              (it: SupabaseOrderItemRow) => ({
+                productId: String(it.produto_id),
+                productName: "Peça Impressa 3D",
+                imageUrl: "",
+                quantity: it.quantidade,
+                unitPrice: Number(it.preco_unitario),
+                color: it.cor_escolhida,
+              }),
+            ),
             totalAmount: Number(data.valor_total),
             status,
             paid: Boolean(data.pago),
             createdAt: data.data_criacao || new Date().toISOString(),
           };
         }
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao buscar pedido no Supabase.", error);
+      }
     }
 
     return null;
@@ -236,7 +289,7 @@ export const ordersService = {
     const itemsList = order.items
       .map(
         (i) =>
-          `• ${i.quantity}x ${i.productName} (${i.color || "Cor Padrão"}) - R$ ${(i.unitPrice * i.quantity).toFixed(2)}`
+          `• ${i.quantity}x ${i.productName} (${i.color || "Cor Padrão"}) - R$ ${(i.unitPrice * i.quantity).toFixed(2)}`,
       )
       .join("%0A");
 
@@ -254,7 +307,18 @@ export const ordersService = {
     return `https://wa.me/${cleanPhone}?text=${text}`;
   },
 
-  buildCustomQuoteUrl(companyNumber: string, details: { name: string; whatsapp: string; description: string; color?: string; dimensions?: string; fileName?: string; fileSize?: string }): string {
+  buildCustomQuoteUrl(
+    companyNumber: string,
+    details: {
+      name: string;
+      whatsapp: string;
+      description: string;
+      color?: string;
+      dimensions?: string;
+      fileName?: string;
+      fileSize?: string;
+    },
+  ): string {
     const cleanPhone = companyNumber.replace(/\D/g, "");
     const text =
       `*Olá, JOTAD3D! Gostaria de um orçamento para peça personalizada:*%0A%0A` +
@@ -262,8 +326,12 @@ export const ordersService = {
       `*WhatsApp:* ${details.whatsapp}%0A` +
       `*Descrição da Peça:* ${details.description}%0A` +
       (details.color ? `*Cor Preferida:* ${details.color}%0A` : "") +
-      (details.dimensions ? `*Dimensões Estimadas:* ${details.dimensions}%0A` : "") +
-      (details.fileName ? `*Arquivo 3D / Imagem:* ${details.fileName} (${details.fileSize || ""})%0A` : "") +
+      (details.dimensions
+        ? `*Dimensões Estimadas:* ${details.dimensions}%0A`
+        : "") +
+      (details.fileName
+        ? `*Arquivo 3D / Imagem:* ${details.fileName} (${details.fileSize || ""})%0A`
+        : "") +
       `%0AEnvio em seguida o arquivo ou fotos para análise!`;
 
     return `https://wa.me/${cleanPhone}?text=${text}`;

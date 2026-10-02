@@ -2,9 +2,9 @@ import { IconButton } from "@mui/material";
 import { X } from "lucide-react";
 import type { ElementType } from "react";
 
-interface DialogActionCloseProps<T = any> {
+interface DialogActionCloseProps<T = unknown> {
   icon?: ElementType;
-  onClose?: (result?: T) => Promise<any> | void;
+  onClose?: (result?: T) => Promise<void> | void;
 }
 
 export default function DialogActionClose<T>(props: DialogActionCloseProps<T>) {

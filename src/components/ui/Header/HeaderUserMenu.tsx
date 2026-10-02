@@ -1,6 +1,6 @@
 import { IconButton, ListItemIcon, MenuItem, Stack } from "@mui/material";
 import { LogOut, PackageOpen, Settings } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import type { UserInfo } from "../../../shared/interfaces/UserInfo";
 import UserAvatar from "../UserAvatar/inex";
@@ -45,28 +45,26 @@ export default function HeaderUserMenu({
   ];
 
   const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
-  const handleToggle = () => {
+  const handleToggle = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
     setOpen((prevOpen) => !prevOpen);
   };
 
   const handleClose = (event: Event | React.SyntheticEvent) => {
-    if (
-      anchorRef.current &&
-      anchorRef.current.contains(event.target as HTMLElement)
-    ) {
+    if (open && anchorEl && anchorEl.contains(event.target as Node)) {
       return;
     }
 
     setOpen(false);
+    setAnchorEl(null);
   };
 
   return (
     <Stack direction="row" spacing={1} alignItems="center">
       <HeaderUserInfo user={user} />
       <IconButton
-        ref={anchorRef}
         aria-controls={open ? "composition-menu" : undefined}
         aria-expanded={open ? "true" : undefined}
         aria-haspopup="true"
@@ -77,7 +75,7 @@ export default function HeaderUserMenu({
       <HeaderPopoverMenu
         user={user}
         open={open}
-        anchorEl={anchorRef.current}
+        anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{
           vertical: "bottom",

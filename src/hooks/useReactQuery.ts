@@ -35,7 +35,7 @@ export function useReactQuery({ api, queryKeys }: UseReactQueryProps) {
     params?: object,
     config?: {
       method?: "get" | "post";
-      data?: any;
+      data?: unknown;
       queryOptions?: Partial<UseQueryOptions<T, Error>>;
     },
   ) {
@@ -72,7 +72,7 @@ export function useReactQuery({ api, queryKeys }: UseReactQueryProps) {
     });
   }
 
-  function useAdicionar<T, TVariables = any, TContext = unknown>(
+  function useAdicionar<T, TVariables = unknown, TContext = unknown>(
     url: string,
     mutationOptions?: UseMutationOptions<T, Error, TVariables, TContext>,
   ) {
@@ -83,22 +83,20 @@ export function useReactQuery({ api, queryKeys }: UseReactQueryProps) {
         return response.data;
       },
       onSuccess: (...args) => {
-        const [data, variables, context] = args;
         queryClient.invalidateQueries({ queryKey: [mainKey] });
         toast.success("Registro adicionado com sucesso!");
-        (onSuccess as any)?.(data, variables, context);
+        onSuccess?.(...args);
       },
       onError: (...args) => {
-        const [error, variables, context] = args;
         toast.error("Erro ao adicionar registro.");
-        console.error(error);
-        (onError as any)?.(error, variables, context);
+        console.error(args[0]);
+        onError?.(...args);
       },
       ...rest,
     });
   }
 
-  function useAlterar<T, TVariables = any, TContext = unknown>(
+  function useAlterar<T, TVariables = unknown, TContext = unknown>(
     url: string,
     mutationOptions?: UseMutationOptions<T, Error, TVariables, TContext>,
   ) {
@@ -109,22 +107,24 @@ export function useReactQuery({ api, queryKeys }: UseReactQueryProps) {
         return response.data;
       },
       onSuccess: (...args) => {
-        const [data, variables, context] = args;
         queryClient.invalidateQueries({ queryKey: [mainKey] });
         toast.success("Registro alterado com sucesso!");
-        (onSuccess as any)?.(data, variables, context);
+        onSuccess?.(...args);
       },
       onError: (...args) => {
-        const [error, variables, context] = args;
         toast.error("Erro ao alterar registro.");
-        console.error(error);
-        (onError as any)?.(error, variables, context);
+        console.error(args[0]);
+        onError?.(...args);
       },
       ...rest,
     });
   }
 
-  function useRemover<T = void, TVariables = string | number, TContext = unknown>(
+  function useRemover<
+    T = void,
+    TVariables = string | number,
+    TContext = unknown,
+  >(
     url: string,
     mutationOptions?: UseMutationOptions<T, Error, TVariables, TContext>,
   ) {
@@ -135,16 +135,14 @@ export function useReactQuery({ api, queryKeys }: UseReactQueryProps) {
         return response.data;
       },
       onSuccess: (...args) => {
-        const [data, variables, context] = args;
         queryClient.invalidateQueries({ queryKey: [mainKey] });
         toast.success("Registro removido com sucesso!");
-        (onSuccess as any)?.(data, variables, context);
+        onSuccess?.(...args);
       },
       onError: (...args) => {
-        const [error, variables, context] = args;
         toast.error("Erro ao remover registro.");
-        console.error(error);
-        (onError as any)?.(error, variables, context);
+        console.error(args[0]);
+        onError?.(...args);
       },
       ...rest,
     });

@@ -9,7 +9,7 @@ import {
 import { useDialogs, type DialogComponent } from "@toolpad/core";
 import type { ElementType } from "react";
 
-type DialogTriggerProps<Tpayload = any, Tresult = any> = {
+type DialogTriggerProps<Tpayload = unknown, Tresult = unknown> = {
   icon?: ElementType;
   label?: string;
   onlyIcon?: boolean;

@@ -6,7 +6,12 @@ import { Dialog } from "../../ui/Dialog";
 import { useForm } from "../../../hooks/useForm";
 import { useAppToolbar } from "../../../providers";
 
-export default function Form(props: DialogProps<any, any>) {
+interface ClienteFormData {
+  nome: string;
+  sobrenome: string;
+}
+
+export default function Form(props: DialogProps<ClienteFormData, undefined>) {
   const { onClose, open, payload } = props;
   async function handleSubmit() {
     try {
@@ -38,7 +43,7 @@ export default function Form(props: DialogProps<any, any>) {
     if (payload) {
       setData(payload);
     }
-  }, [payload]);
+  }, [payload, setData]);
 
   const { addDialog } = useAppToolbar();
 

@@ -18,7 +18,14 @@ import {
   DialogContentText,
   DialogActions,
 } from "@mui/material";
-import { Plus, Edit, Trash2, Search, Clock, Box as BoxIcon } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Clock,
+  Box as BoxIcon,
+} from "lucide-react";
 import { useDialogs } from "@toolpad/core";
 import { productsService } from "../../../services/products.service";
 import type { Product } from "../../../shared/interfaces/Product";
@@ -57,12 +64,15 @@ export default function ProductsTable() {
     }
   };
 
-  const handleEdit = async (product: Product) => {
-    const updated = await dialogs.open(ProductFormDialog, product);
-    if (updated) {
-      loadProducts();
-    }
-  };
+  const handleEdit = useCallback(
+    async (product: Product) => {
+      const updated = await dialogs.open(ProductFormDialog, product);
+      if (updated) {
+        loadProducts();
+      }
+    },
+    [dialogs, loadProducts],
+  );
 
   const handleConfirmDelete = async () => {
     if (!deleteCandidate) return;
@@ -83,7 +93,7 @@ export default function ProductsTable() {
       (p) =>
         p.name.toLowerCase().includes(term) ||
         p.category.toLowerCase().includes(term) ||
-        (p.material && p.material.toLowerCase().includes(term))
+        (p.material && p.material.toLowerCase().includes(term)),
     );
   }, [products, searchTerm]);
 
@@ -227,7 +237,7 @@ export default function ProductsTable() {
         ),
       },
     ],
-    []
+    [handleEdit],
   );
 
   return (
@@ -291,10 +301,7 @@ export default function ProductsTable() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setDeleteCandidate(null)}
-            disabled={deleting}
-          >
+          <Button onClick={() => setDeleteCandidate(null)} disabled={deleting}>
             Cancelar
           </Button>
           <Button

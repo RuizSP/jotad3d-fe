@@ -1,5 +1,5 @@
 import { Chip } from "@mui/material";
-import { useDialogs } from "@toolpad/core";
+import { useDialogs, type DialogComponent } from "@toolpad/core";
 import { FileText, X } from "lucide-react";
 import { useAppToolbar } from "../../../../providers";
 
@@ -9,7 +9,7 @@ interface AppToolbarItemProps {
   dialog: {
     id: string;
     module: string;
-    payload: any;
+    payload: object;
     title: string;
   };
 }
@@ -29,7 +29,7 @@ export function AppToolbarItem({ dialog }: AppToolbarItemProps) {
     }
 
     const loadedModule = (await importer()) as {
-      default: React.ComponentType<any>;
+      default: DialogComponent<object, unknown>;
     };
     const Component = loadedModule.default;
 

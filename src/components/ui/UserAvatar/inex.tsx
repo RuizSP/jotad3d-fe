@@ -20,6 +20,7 @@ export default function UserAvatar(props: UserAvatarProps) {
         bgcolor: "transparent",
       }}
       src={src}
+      alt={name}
       {...rest}
     >
       {!src && <User width={16} height={16} />}

@@ -33,16 +33,10 @@ export function ThemeToggleProvider({ children }: ThemeToggleProviderProps) {
     return (storedTheme as ThemeName) || DEFAULT_THEME_NAME;
   });
 
-  const [theme, setThemeObj] = useState<Theme>(
-    themes[themeName] || themes.elegantGold,
-  );
+  const theme: Theme = themes[themeName] || themes.elegantGold;
 
   useEffect(() => {
-    const selectedTheme = themes[themeName];
-    if (selectedTheme) {
-      setThemeObj(selectedTheme);
-      localStorage.setItem(themeStorageKey, themeName);
-    }
+    localStorage.setItem(themeStorageKey, themeName);
   }, [themeName]);
 
   const setTheme = (name: ThemeName) => {

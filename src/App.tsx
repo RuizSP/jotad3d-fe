@@ -16,7 +16,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 const queryClient = new QueryClient();
 
-function _App() {
+function AppContent() {
   const { theme } = useThemeToggle();
   return (
     <ThemeProvider theme={theme}>
@@ -42,7 +42,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeToggleProvider>
         <ErrorBoundary fallBack={(error) => <Error error={error} />}>
-          <_App />
+          <AppContent />
         </ErrorBoundary>
       </ThemeToggleProvider>
     </QueryClientProvider>

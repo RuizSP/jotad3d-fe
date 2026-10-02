@@ -1,8 +1,8 @@
 import { IconButton } from "@mui/material";
 import { Trash2 } from "lucide-react";
 
-export default function DataTableDeleteButton({ data }: { data: any }) {
-  const handleClick = (event: "edit" | "delete", rowData: any) => {
+export default function DataTableDeleteButton<T>({ data }: { data: T }) {
+  const handleClick = (event: "edit" | "delete", rowData: T) => {
     return { event, rowData };
   };
 

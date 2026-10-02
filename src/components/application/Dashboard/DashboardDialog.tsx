@@ -2,7 +2,7 @@ import type { DialogProps } from "@toolpad/core";
 import { Dialog } from "../../ui/Dialog";
 import { useAppToolbar } from "../../../providers";
 
-export default function DashboardDialog(props: DialogProps<any, any>) {
+export default function DashboardDialog(props: DialogProps<object, undefined>) {
   const { onClose, open, payload } = props;
   function handleSubmit() {
     onClose(undefined);

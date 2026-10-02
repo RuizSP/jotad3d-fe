@@ -14,12 +14,27 @@ export default function RelatedProducts({
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    productsService.getAll().then((list) => {
-      const filtered = currentCategory
-        ? list.filter((p) => p.category === currentCategory)
-        : list;
-      setProducts(filtered.slice(0, 4));
-    });
+    let active = true;
+
+    productsService
+      .getAll()
+      .then((list) => {
+        if (!active) return;
+
+        const filtered = currentCategory
+          ? list.filter((p) => p.category === currentCategory)
+          : list;
+        setProducts(filtered.slice(0, 4));
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          console.error("Falha ao carregar produtos relacionados.", error);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, [currentCategory]);
 
   if (products.length === 0) return null;
@@ -32,7 +47,11 @@ export default function RelatedProducts({
         alignItems="center"
         mb={3}
       >
-        <Typography variant="h5" fontWeight="900" sx={{ letterSpacing: "-0.02em" }}>
+        <Typography
+          variant="h5"
+          fontWeight="900"
+          sx={{ letterSpacing: "-0.02em" }}
+        >
           Outras Peças em Destaque
         </Typography>
         <Button

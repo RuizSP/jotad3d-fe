@@ -1,6 +1,6 @@
 import { Stack, useTheme, type StackProps } from "@mui/material";
 
-interface DialogHeaderProps extends StackProps {}
+type DialogHeaderProps = StackProps;
 
 export default function DialogHeader(props: DialogHeaderProps) {
   const { children, sx, ...rest } = props;

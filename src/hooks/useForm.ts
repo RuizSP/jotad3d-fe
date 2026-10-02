@@ -1,15 +1,20 @@
-import { useState, useCallback, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import * as Yup from "yup";
 
-interface UseFormProps<T> {
+interface UseFormProps<T extends Yup.AnyObject> {
   initialValues: T;
-  schema?: Yup.ObjectSchema<any>;
+  schema?: Yup.AnyObjectSchema;
 }
 
-interface UseFormReturn<T> {
+interface UseFormReturn<T extends Yup.AnyObject> {
   data: T;
   setData: Dispatch<SetStateAction<T>>;
-  changeValue: (field: keyof T, value: any) => void;
+  changeValue: <K extends keyof T>(field: K, value: T[K]) => void;
   validation: () => Promise<boolean>;
   validationErrors: (field: keyof T) => {
     error: boolean;
@@ -18,7 +23,7 @@ interface UseFormReturn<T> {
   clearErrors: () => void;
 }
 
-export function useForm<T>({
+export function useForm<T extends Yup.AnyObject>({
   initialValues,
   schema,
 }: UseFormProps<T>): UseFormReturn<T> {
@@ -27,14 +32,17 @@ export function useForm<T>({
     Record<string, string>
   >({});
 
-  const changeValue = useCallback((field: keyof T, value: any) => {
-    setData((prev) => ({ ...prev, [field]: value }));
-    setValidationErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[field as string];
-      return newErrors;
-    });
-  }, []);
+  const changeValue = useCallback(
+    <K extends keyof T>(field: K, value: T[K]) => {
+      setData((prev) => ({ ...prev, [field]: value }));
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field as string];
+        return newErrors;
+      });
+    },
+    [],
+  );
 
   const validation = useCallback(async () => {
     if (!schema) return true;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -33,27 +33,41 @@ export default function OrderTracking() {
   const [order, setOrder] = useState<Order | null>(null);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const searchRequestId = useRef(0);
 
   const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
   const cleanPhone = companyPhone.replace(/\D/g, "");
 
-  const handleSearch = async (codeToSearch: string) => {
+  const handleSearch = useCallback(async (codeToSearch: string) => {
     if (!codeToSearch.trim()) return;
+    const requestId = ++searchRequestId.current;
     setLoading(true);
     setSearched(true);
     try {
       const found = await ordersService.getByCodeOrNumber(codeToSearch);
-      setOrder(found);
+      if (requestId === searchRequestId.current) {
+        setOrder(found);
+      }
+    } catch (error) {
+      if (requestId === searchRequestId.current) {
+        setOrder(null);
+        console.error("Falha ao buscar pedido.", error);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestId.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (initialCode) {
-      handleSearch(initialCode);
+      void handleSearch(initialCode);
     }
-  }, [initialCode]);
+    return () => {
+      searchRequestId.current += 1;
+    };
+  }, [initialCode, handleSearch]);
 
   const currentStepIndex = order
     ? ORDER_STATUS_STEPS.findIndex((s) => s.key === order.status)
@@ -64,11 +78,20 @@ export default function OrderTracking() {
       <Page.Content>
         <Box sx={{ maxWidth: "md", mx: "auto", width: "100%", pb: 8 }}>
           <Box sx={{ textAlign: "center", mb: 5 }}>
-            <Typography variant="h4" fontWeight="900" sx={{ letterSpacing: "-0.03em" }}>
+            <Typography
+              variant="h4"
+              fontWeight="900"
+              sx={{ letterSpacing: "-0.03em" }}
+            >
               Acompanhar Produção 3D
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, maxWidth: 500, mx: "auto" }}>
-              Insira o código de acompanhamento (ex: JD-XXXXX) ou o número do pedido para ver o status em tempo real.
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, maxWidth: 500, mx: "auto" }}
+            >
+              Insira o código de acompanhamento (ex: JD-XXXXX) ou o número do
+              pedido para ver o status em tempo real.
             </Typography>
 
             <Paper
@@ -91,7 +114,9 @@ export default function OrderTracking() {
                 fullWidth
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch(searchInput)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleSearch(searchInput)
+                }
                 InputProps={{
                   disableUnderline: true,
                   sx: { px: 2, fontSize: "0.95rem" },
@@ -101,7 +126,13 @@ export default function OrderTracking() {
                 variant="contained"
                 color="primary"
                 onClick={() => handleSearch(searchInput)}
-                startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <Search size={18} />}
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <Search size={18} />
+                  )
+                }
                 sx={{ borderRadius: "40px", px: 3, fontWeight: 700 }}
               >
                 Buscar
@@ -114,8 +145,12 @@ export default function OrderTracking() {
               <CircularProgress color="secondary" />
             </Box>
           ) : searched && !order ? (
-            <Alert severity="warning" sx={{ borderRadius: 3, maxWidth: 540, mx: "auto" }}>
-              Nenhum pedido encontrado para o código informado. Verifique se digitou corretamente ou consulte o atendente no WhatsApp.
+            <Alert
+              severity="warning"
+              sx={{ borderRadius: 3, maxWidth: 540, mx: "auto" }}
+            >
+              Nenhum pedido encontrado para o código informado. Verifique se
+              digitou corretamente ou consulte o atendente no WhatsApp.
             </Alert>
           ) : order ? (
             <Paper
@@ -136,7 +171,12 @@ export default function OrderTracking() {
                 mb={4}
               >
                 <Box>
-                  <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight="700">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    textTransform="uppercase"
+                    fontWeight="700"
+                  >
                     Código de Rastreio: <strong>{order.accessCode}</strong>
                   </Typography>
                   <Typography variant="h5" fontWeight="900" sx={{ mt: 0.5 }}>
@@ -170,68 +210,80 @@ export default function OrderTracking() {
               </Typography>
 
               <Stack spacing={2} sx={{ mb: 5 }}>
-                {ORDER_STATUS_STEPS.filter((s) => s.key !== "cancelado").map((step, idx) => {
-                  const isDone = idx <= currentStepIndex;
-                  const isCurrent = idx === currentStepIndex;
+                {ORDER_STATUS_STEPS.filter((s) => s.key !== "cancelado").map(
+                  (step, idx) => {
+                    const isDone = idx <= currentStepIndex;
+                    const isCurrent = idx === currentStepIndex;
 
-                  return (
-                    <Box
-                      key={step.key}
-                      sx={{
-                        display: "flex",
-                        gap: 2.5,
-                        alignItems: "flex-start",
-                        position: "relative",
-                      }}
-                    >
+                    return (
                       <Box
+                        key={step.key}
                         sx={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          bgcolor: isCurrent
-                            ? "secondary.main"
-                            : isDone
-                            ? "primary.main"
-                            : "background.default",
-                          color: isCurrent
-                            ? "#0A0A0A"
-                            : isDone
-                            ? "#FFFFFF"
-                            : "text.disabled",
-                          border: "2px solid",
-                          borderColor: isCurrent
-                            ? "secondary.main"
-                            : isDone
-                            ? "primary.main"
-                            : "divider",
                           display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          fontWeight: 800,
-                          fontSize: "0.85rem",
-                          zIndex: 1,
+                          gap: 2.5,
+                          alignItems: "flex-start",
+                          position: "relative",
                         }}
                       >
-                        {isDone ? <CheckCircle size={18} /> : <Clock size={16} />}
-                      </Box>
-
-                      <Box sx={{ flexGrow: 1, pt: 0.5 }}>
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight={isCurrent ? 900 : isDone ? 700 : 500}
-                          color={isCurrent ? "secondary.main" : isDone ? "text.primary" : "text.secondary"}
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            bgcolor: isCurrent
+                              ? "secondary.main"
+                              : isDone
+                                ? "primary.main"
+                                : "background.default",
+                            color: isCurrent
+                              ? "#0A0A0A"
+                              : isDone
+                                ? "#FFFFFF"
+                                : "text.disabled",
+                            border: "2px solid",
+                            borderColor: isCurrent
+                              ? "secondary.main"
+                              : isDone
+                                ? "primary.main"
+                                : "divider",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            fontWeight: 800,
+                            fontSize: "0.85rem",
+                            zIndex: 1,
+                          }}
                         >
-                          {step.label}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {step.description}
-                        </Typography>
+                          {isDone ? (
+                            <CheckCircle size={18} />
+                          ) : (
+                            <Clock size={16} />
+                          )}
+                        </Box>
+
+                        <Box sx={{ flexGrow: 1, pt: 0.5 }}>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={isCurrent ? 900 : isDone ? 700 : 500}
+                            color={
+                              isCurrent
+                                ? "secondary.main"
+                                : isDone
+                                  ? "text.primary"
+                                  : "text.secondary"
+                            }
+                          >
+                            {step.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {step.description}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  );
-                })}
+                    );
+                  },
+                )}
               </Stack>
 
               <Divider sx={{ mb: 3 }} />
@@ -259,7 +311,10 @@ export default function OrderTracking() {
                           {item.color && (
                             <Box display="flex" alignItems="center" gap={0.8}>
                               <ColorSwatch colorName={item.color} size={10} />
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 {item.color}
                               </Typography>
                             </Box>
@@ -287,17 +342,27 @@ export default function OrderTracking() {
                     {order.address.rua && (
                       <Typography variant="body2" color="text.secondary">
                         {order.address.rua}, {order.address.numero}
-                        {order.address.complemento ? ` (${order.address.complemento})` : ""}
+                        {order.address.complemento
+                          ? ` (${order.address.complemento})`
+                          : ""}
                         <br />
                         {order.address.bairro} • CEP {order.address.cep}
                       </Typography>
                     )}
                     <Divider sx={{ my: 1.5 }} />
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="subtitle2" fontWeight="800">
                         Total do Pedido:
                       </Typography>
-                      <Typography variant="h6" fontWeight="900" color="secondary.main">
+                      <Typography
+                        variant="h6"
+                        fontWeight="900"
+                        color="secondary.main"
+                      >
                         R$ {order.totalAmount.toFixed(2)}
                       </Typography>
                     </Box>

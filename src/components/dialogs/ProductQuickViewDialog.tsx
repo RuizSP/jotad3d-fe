@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -10,7 +10,15 @@ import {
   Divider,
   TextField,
 } from "@mui/material";
-import { Plus, Minus, ShoppingCart, Clock, Layers, Maximize2, Paintbrush } from "lucide-react";
+import {
+  Plus,
+  Minus,
+  ShoppingCart,
+  Clock,
+  Layers,
+  Maximize2,
+  Paintbrush,
+} from "lucide-react";
 import type { Product } from "../../shared/interfaces/Product";
 import { useCart } from "../../providers/CartContext";
 import ColorSwatch from "../common/ColorSwatch";
@@ -44,27 +52,14 @@ export default function ProductQuickViewDialog({
   onClose,
 }: ProductQuickViewDialogProps) {
   const { addItem } = useCart();
-  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>(
+    product?.availableColors?.[0] ?? "Preto",
+  );
   const [selectedScaleIndex, setSelectedScaleIndex] = useState<number>(0);
   const [selectedMaterialIndex, setSelectedMaterialIndex] = useState<number>(0);
   const [selectedFinishIndex, setSelectedFinishIndex] = useState<number>(0);
   const [paintInstructions, setPaintInstructions] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
-
-  useEffect(() => {
-    if (product) {
-      setSelectedColor(
-        product.availableColors && product.availableColors.length > 0
-          ? product.availableColors[0]
-          : "Preto"
-      );
-      setSelectedScaleIndex(0);
-      setSelectedMaterialIndex(0);
-      setSelectedFinishIndex(0);
-      setPaintInstructions("");
-      setQuantity(1);
-    }
-  }, [product]);
 
   if (!product) return null;
 
@@ -76,7 +71,7 @@ export default function ProductQuickViewDialog({
       (product.price * currentScale.multiplier +
         currentMaterial.addPrice +
         currentFinish.addPrice) *
-        100
+        100,
     ) / 100;
 
   const handleAddToCart = () => {
@@ -153,7 +148,11 @@ export default function ProductQuickViewDialog({
               </Box>
 
               <Box display="flex" alignItems="baseline" gap={1}>
-                <Typography variant="h4" fontWeight="800" color="secondary.main">
+                <Typography
+                  variant="h4"
+                  fontWeight="800"
+                  color="secondary.main"
+                >
                   R$ {unitPrice.toFixed(2)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -162,7 +161,11 @@ export default function ProductQuickViewDialog({
               </Box>
 
               {product.description && (
-                <Typography variant="body2" color="text.secondary" lineHeight={1.5}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  lineHeight={1.5}
+                >
                   {product.description}
                 </Typography>
               )}
@@ -170,7 +173,11 @@ export default function ProductQuickViewDialog({
               <Divider />
 
               <Stack spacing={1}>
-                <Typography variant="caption" fontWeight="bold" textTransform="uppercase">
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
                   Escala / Tamanho da Peça:
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -180,17 +187,25 @@ export default function ProductQuickViewDialog({
                       label={scale.label}
                       clickable
                       onClick={() => setSelectedScaleIndex(idx)}
-                      variant={selectedScaleIndex === idx ? "filled" : "outlined"}
+                      variant={
+                        selectedScaleIndex === idx ? "filled" : "outlined"
+                      }
                       color={selectedScaleIndex === idx ? "primary" : "default"}
                       size="small"
-                      sx={{ fontWeight: selectedScaleIndex === idx ? 800 : 500 }}
+                      sx={{
+                        fontWeight: selectedScaleIndex === idx ? 800 : 500,
+                      }}
                     />
                   ))}
                 </Stack>
               </Stack>
 
               <Stack spacing={1}>
-                <Typography variant="caption" fontWeight="bold" textTransform="uppercase">
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
                   Material / Filamento:
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -200,31 +215,51 @@ export default function ProductQuickViewDialog({
                       label={mat.label}
                       clickable
                       onClick={() => setSelectedMaterialIndex(idx)}
-                      variant={selectedMaterialIndex === idx ? "filled" : "outlined"}
-                      color={selectedMaterialIndex === idx ? "primary" : "default"}
+                      variant={
+                        selectedMaterialIndex === idx ? "filled" : "outlined"
+                      }
+                      color={
+                        selectedMaterialIndex === idx ? "primary" : "default"
+                      }
                       size="small"
-                      sx={{ fontWeight: selectedMaterialIndex === idx ? 800 : 500 }}
+                      sx={{
+                        fontWeight: selectedMaterialIndex === idx ? 800 : 500,
+                      }}
                     />
                   ))}
                 </Stack>
               </Stack>
 
               <Stack spacing={1}>
-                <Typography variant="caption" fontWeight="bold" textTransform="uppercase">
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
                   Acabamento da Peça:
                 </Typography>
                 <Stack direction="row" spacing={1}>
                   {FINISH_OPTIONS.map((fin, idx) => (
                     <Chip
                       key={fin.id}
-                      icon={fin.id === "pintura" ? <Paintbrush size={14} /> : undefined}
+                      icon={
+                        fin.id === "pintura" ? (
+                          <Paintbrush size={14} />
+                        ) : undefined
+                      }
                       label={fin.label}
                       clickable
                       onClick={() => setSelectedFinishIndex(idx)}
-                      variant={selectedFinishIndex === idx ? "filled" : "outlined"}
-                      color={selectedFinishIndex === idx ? "primary" : "default"}
+                      variant={
+                        selectedFinishIndex === idx ? "filled" : "outlined"
+                      }
+                      color={
+                        selectedFinishIndex === idx ? "primary" : "default"
+                      }
                       size="small"
-                      sx={{ fontWeight: selectedFinishIndex === idx ? 800 : 500 }}
+                      sx={{
+                        fontWeight: selectedFinishIndex === idx ? 800 : 500,
+                      }}
                     />
                   ))}
                 </Stack>
@@ -232,23 +267,31 @@ export default function ProductQuickViewDialog({
 
               {currentFinish.id === "filamento" ? (
                 <Stack spacing={1}>
-                  <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Typography variant="caption" fontWeight="bold" textTransform="uppercase">
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography
+                      variant="caption"
+                      fontWeight="bold"
+                      textTransform="uppercase"
+                    >
                       Cor do Filamento: <strong>{selectedColor}</strong>
                     </Typography>
                   </Box>
                   <Stack direction="row" spacing={1.5} alignItems="center">
-                    {(product.availableColors || ["Preto", "Branco", "Dourado"]).map(
-                      (colorName) => (
-                        <ColorSwatch
-                          key={colorName}
-                          colorName={colorName}
-                          selected={selectedColor === colorName}
-                          size={26}
-                          onClick={() => setSelectedColor(colorName)}
-                        />
-                      )
-                    )}
+                    {(
+                      product.availableColors || ["Preto", "Branco", "Dourado"]
+                    ).map((colorName) => (
+                      <ColorSwatch
+                        key={colorName}
+                        colorName={colorName}
+                        selected={selectedColor === colorName}
+                        size={26}
+                        onClick={() => setSelectedColor(colorName)}
+                      />
+                    ))}
                   </Stack>
                 </Stack>
               ) : (
@@ -261,8 +304,15 @@ export default function ProductQuickViewDialog({
                     borderColor: "primary.main",
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    🎨 <strong>Pintura Manual Artística:</strong> A peça é tratada com primer automotivo cinza e pintada à mão com acabamento profissional e verniz. A cor original do filamento é totalmente recoberta.
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                  >
+                    🎨 <strong>Pintura Manual Artística:</strong> A peça é
+                    tratada com primer automotivo cinza e pintada à mão com
+                    acabamento profissional e verniz. A cor original do
+                    filamento é totalmente recoberta.
                   </Typography>
                   <TextField
                     size="small"
@@ -288,7 +338,11 @@ export default function ProductQuickViewDialog({
                   <Box display="flex" alignItems="center" gap={1}>
                     <Clock size={15} />
                     <Typography variant="caption" color="text.secondary">
-                      ~{Math.round(product.printTimeHours * currentScale.multiplier)}h
+                      ~
+                      {Math.round(
+                        product.printTimeHours * currentScale.multiplier,
+                      )}
+                      h
                     </Typography>
                   </Box>
                 )}

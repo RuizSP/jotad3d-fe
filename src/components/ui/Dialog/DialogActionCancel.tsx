@@ -1,14 +1,21 @@
 import { Button, type ButtonProps } from "@mui/material";
 
-interface DialogActionCancelProps<T = any> extends ButtonProps {
+interface DialogActionCancelProps<T = unknown> extends ButtonProps {
   onCancel?: (result?: T) => Promise<void> | void;
   label?: string;
 }
 
 export default function DialogActionCancel<T>(
-  props: DialogActionCancelProps<T>
+  props: DialogActionCancelProps<T>,
 ) {
-  const { onCancel, onClick, label = "Cancelar", children, sx, ...rest } = props;
+  const {
+    onCancel,
+    onClick,
+    label = "Cancelar",
+    children,
+    sx,
+    ...rest
+  } = props;
 
   async function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
     if (onClick) {

@@ -24,16 +24,12 @@ export default function Home() {
   const urlCategory = searchParams.get("cat") || "Todos";
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
+  const selectedCategory = urlCategory;
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
+    null,
+  );
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (urlCategory) {
-      setSelectedCategory(urlCategory);
-    }
-  }, [urlCategory]);
 
   useEffect(() => {
     productsService
@@ -122,8 +118,8 @@ export default function Home() {
                 maxWidth: 580,
               }}
             >
-              Peças autorais, utilitários e projetos especiais sob demanda.
-              Faça seu pedido diretamente pelo catálogo sem necessidade de cadastro.
+              Peças autorais, utilitários e projetos especiais sob demanda. Faça
+              seu pedido diretamente pelo catálogo sem necessidade de cadastro.
             </Typography>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} pt={1}>
@@ -191,7 +187,8 @@ export default function Home() {
                 Catálogo de Peças
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {filteredProducts.length} itens encontrados para produção sob demanda
+                {filteredProducts.length} itens encontrados para produção sob
+                demanda
               </Typography>
             </Box>
 
@@ -221,14 +218,16 @@ export default function Home() {
               "&::-webkit-scrollbar": { display: "none" },
             }}
           >
-            <SlidersHorizontal size={18} style={{ alignSelf: "center", marginRight: 8, opacity: 0.6 }} />
+            <SlidersHorizontal
+              size={18}
+              style={{ alignSelf: "center", marginRight: 8, opacity: 0.6 }}
+            />
             {categories.map((cat) => (
               <Chip
                 key={cat}
                 label={cat}
                 clickable
                 onClick={() => {
-                  setSelectedCategory(cat);
                   if (cat === "Todos") {
                     setSearchParams({});
                   } else {
@@ -257,8 +256,13 @@ export default function Home() {
             <Typography variant="h6" fontWeight="bold">
               Nenhuma peça encontrada no catálogo
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-              Cadastre novas peças através do painel ou envie um modelo 3D para orçamento direto no WhatsApp.
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, mb: 3 }}
+            >
+              Cadastre novas peças através do painel ou envie um modelo 3D para
+              orçamento direto no WhatsApp.
             </Typography>
             <Button
               variant="contained"
@@ -284,6 +288,7 @@ export default function Home() {
         )}
 
         <ProductQuickViewDialog
+          key={quickViewProduct?.id ?? "closed"}
           product={quickViewProduct}
           open={Boolean(quickViewProduct)}
           onClose={() => setQuickViewProduct(null)}

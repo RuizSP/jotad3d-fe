@@ -40,7 +40,6 @@ const MATERIAL_OPTIONS = [
   { label: "PETG Reforçado (+R$ 15)", addPrice: 15 },
 ];
 
-
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -55,20 +54,33 @@ export default function ProductDetails() {
   const [quoteOpen, setQuoteOpen] = useState(false);
 
   useEffect(() => {
+    let active = true;
+
     if (id) {
-      productsService.getById(id).then((p) => {
-        if (p) {
-          setProduct(p);
-          if (p.availableColors && p.availableColors.length > 0) {
-            setSelectedColor(p.availableColors[0]);
+      productsService
+        .getById(id)
+        .then((p) => {
+          if (active && p) {
+            setProduct(p);
+            if (p.availableColors && p.availableColors.length > 0) {
+              setSelectedColor(p.availableColors[0]);
+            }
+            setSelectedScaleIndex(0);
+            setSelectedMaterialIndex(0);
+            setSelectedFinishIndex(0);
+            setPaintInstructions("");
           }
-          setSelectedScaleIndex(0);
-          setSelectedMaterialIndex(0);
-          setSelectedFinishIndex(0);
-          setPaintInstructions("");
-        }
-      });
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            console.error("Falha ao carregar detalhes do produto.", error);
+          }
+        });
     }
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   if (!product) {
@@ -109,7 +121,7 @@ export default function ProductDetails() {
       (product.price * currentScale.multiplier +
         currentMaterial.addPrice +
         currentFinish.addPrice) *
-        100
+        100,
     ) / 100;
 
   const handleAddToCart = () => {
@@ -198,12 +210,20 @@ export default function ProductDetails() {
                 />
               </Box>
 
-              <Typography variant="h3" fontWeight="900" sx={{ letterSpacing: "-0.03em" }}>
+              <Typography
+                variant="h3"
+                fontWeight="900"
+                sx={{ letterSpacing: "-0.03em" }}
+              >
                 {product.name}
               </Typography>
 
               <Box display="flex" alignItems="baseline" gap={1}>
-                <Typography variant="h3" fontWeight="900" color="secondary.main">
+                <Typography
+                  variant="h3"
+                  fontWeight="900"
+                  color="secondary.main"
+                >
                   R$ {unitPrice.toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -212,7 +232,11 @@ export default function ProductDetails() {
               </Box>
 
               {product.description && (
-                <Typography variant="body1" color="text.secondary" lineHeight={1.8}>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  lineHeight={1.8}
+                >
                   {product.description}
                 </Typography>
               )}
@@ -220,7 +244,11 @@ export default function ProductDetails() {
               <Divider />
 
               <Stack spacing={1}>
-                <Typography variant="caption" fontWeight="bold" textTransform="uppercase">
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
                   Escala / Tamanho da Peça:
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -230,17 +258,25 @@ export default function ProductDetails() {
                       label={scale.label}
                       clickable
                       onClick={() => setSelectedScaleIndex(idx)}
-                      variant={selectedScaleIndex === idx ? "filled" : "outlined"}
+                      variant={
+                        selectedScaleIndex === idx ? "filled" : "outlined"
+                      }
                       color={selectedScaleIndex === idx ? "primary" : "default"}
                       size="small"
-                      sx={{ fontWeight: selectedScaleIndex === idx ? 800 : 500 }}
+                      sx={{
+                        fontWeight: selectedScaleIndex === idx ? 800 : 500,
+                      }}
                     />
                   ))}
                 </Stack>
               </Stack>
 
               <Stack spacing={1}>
-                <Typography variant="caption" fontWeight="bold" textTransform="uppercase">
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
                   Material / Filamento:
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -250,31 +286,51 @@ export default function ProductDetails() {
                       label={mat.label}
                       clickable
                       onClick={() => setSelectedMaterialIndex(idx)}
-                      variant={selectedMaterialIndex === idx ? "filled" : "outlined"}
-                      color={selectedMaterialIndex === idx ? "primary" : "default"}
+                      variant={
+                        selectedMaterialIndex === idx ? "filled" : "outlined"
+                      }
+                      color={
+                        selectedMaterialIndex === idx ? "primary" : "default"
+                      }
                       size="small"
-                      sx={{ fontWeight: selectedMaterialIndex === idx ? 800 : 500 }}
+                      sx={{
+                        fontWeight: selectedMaterialIndex === idx ? 800 : 500,
+                      }}
                     />
                   ))}
                 </Stack>
               </Stack>
 
               <Stack spacing={1}>
-                <Typography variant="caption" fontWeight="bold" textTransform="uppercase">
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
                   Acabamento da Peça:
                 </Typography>
                 <Stack direction="row" spacing={1}>
                   {FINISH_OPTIONS.map((fin, idx) => (
                     <Chip
                       key={fin.id}
-                      icon={fin.id === "pintura" ? <Paintbrush size={14} /> : undefined}
+                      icon={
+                        fin.id === "pintura" ? (
+                          <Paintbrush size={14} />
+                        ) : undefined
+                      }
                       label={fin.label}
                       clickable
                       onClick={() => setSelectedFinishIndex(idx)}
-                      variant={selectedFinishIndex === idx ? "filled" : "outlined"}
-                      color={selectedFinishIndex === idx ? "primary" : "default"}
+                      variant={
+                        selectedFinishIndex === idx ? "filled" : "outlined"
+                      }
+                      color={
+                        selectedFinishIndex === idx ? "primary" : "default"
+                      }
                       size="small"
-                      sx={{ fontWeight: selectedFinishIndex === idx ? 800 : 500 }}
+                      sx={{
+                        fontWeight: selectedFinishIndex === idx ? 800 : 500,
+                      }}
                     />
                   ))}
                 </Stack>
@@ -282,17 +338,31 @@ export default function ProductDetails() {
 
               {currentFinish.id === "filamento" ? (
                 <Stack spacing={1.5}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="subtitle2" fontWeight="800" textTransform="uppercase">
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="800"
+                      textTransform="uppercase"
+                    >
                       Cor do Filamento:
                     </Typography>
-                    <Typography variant="body2" color="secondary.main" fontWeight="700">
+                    <Typography
+                      variant="body2"
+                      color="secondary.main"
+                      fontWeight="700"
+                    >
                       {selectedColor}
                     </Typography>
                   </Box>
 
                   <Stack direction="row" spacing={1.5} alignItems="center">
-                    {(product.availableColors || ["Preto", "Branco", "Dourado"]).map((c) => (
+                    {(
+                      product.availableColors || ["Preto", "Branco", "Dourado"]
+                    ).map((c) => (
                       <ColorSwatch
                         key={c}
                         colorName={c}
@@ -313,8 +383,15 @@ export default function ProductDetails() {
                     borderColor: "primary.main",
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary" display="block">
-                    🎨 <strong>Pintura Manual Artística:</strong> A peça é tratada com primer automotivo cinza e pintada à mão com acabamento profissional e verniz. A cor original do filamento é totalmente recoberta.
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    display="block"
+                  >
+                    🎨 <strong>Pintura Manual Artística:</strong> A peça é
+                    tratada com primer automotivo cinza e pintada à mão com
+                    acabamento profissional e verniz. A cor original do
+                    filamento é totalmente recoberta.
                   </Typography>
                   <TextField
                     size="small"
@@ -330,7 +407,13 @@ export default function ProductDetails() {
               <Grid container spacing={2} sx={{ py: 1 }}>
                 {product.material && (
                   <Grid size={{ xs: 6, sm: 4 }}>
-                    <Box p={2} borderRadius={2} bgcolor="background.default" border="1px solid" borderColor="divider">
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      bgcolor="background.default"
+                      border="1px solid"
+                      borderColor="divider"
+                    >
                       <Box display="flex" alignItems="center" gap={1} mb={0.5}>
                         <Layers size={16} />
                         <Typography variant="caption" color="text.secondary">
@@ -346,7 +429,13 @@ export default function ProductDetails() {
 
                 {product.printTimeHours && (
                   <Grid size={{ xs: 6, sm: 4 }}>
-                    <Box p={2} borderRadius={2} bgcolor="background.default" border="1px solid" borderColor="divider">
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      bgcolor="background.default"
+                      border="1px solid"
+                      borderColor="divider"
+                    >
                       <Box display="flex" alignItems="center" gap={1} mb={0.5}>
                         <Clock size={16} />
                         <Typography variant="caption" color="text.secondary">
@@ -354,7 +443,11 @@ export default function ProductDetails() {
                         </Typography>
                       </Box>
                       <Typography variant="body2" fontWeight="700">
-                        ~{Math.round(product.printTimeHours * currentScale.multiplier)} horas
+                        ~
+                        {Math.round(
+                          product.printTimeHours * currentScale.multiplier,
+                        )}{" "}
+                        horas
                       </Typography>
                     </Box>
                   </Grid>
@@ -362,7 +455,13 @@ export default function ProductDetails() {
 
                 {product.dimensions && (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <Box p={2} borderRadius={2} bgcolor="background.default" border="1px solid" borderColor="divider">
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      bgcolor="background.default"
+                      border="1px solid"
+                      borderColor="divider"
+                    >
                       <Box display="flex" alignItems="center" gap={1} mb={0.5}>
                         <Maximize2 size={16} />
                         <Typography variant="caption" color="text.secondary">
@@ -379,7 +478,11 @@ export default function ProductDetails() {
 
               <Divider />
 
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                alignItems="center"
+              >
                 <Box
                   display="flex"
                   alignItems="center"

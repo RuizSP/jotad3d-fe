@@ -34,16 +34,22 @@ export default function OrdersTable() {
     loadOrders();
   }, [loadOrders]);
 
-  const handleEditStatus = async (order: Order) => {
-    const updated = await dialogs.open(OrderStatusDialog, order);
-    if (updated) {
-      loadOrders();
-    }
-  };
+  const handleEditStatus = useCallback(
+    async (order: Order) => {
+      const updated = await dialogs.open(OrderStatusDialog, order);
+      if (updated) {
+        loadOrders();
+      }
+    },
+    [dialogs, loadOrders],
+  );
 
-  const handleViewDetails = async (order: Order) => {
-    await dialogs.open(OrderDetailsDialog, order);
-  };
+  const handleViewDetails = useCallback(
+    async (order: Order) => {
+      await dialogs.open(OrderDetailsDialog, order);
+    },
+    [dialogs],
+  );
 
   const columns = useMemo(
     (): GridColDef<Order>[] => [
@@ -111,7 +117,7 @@ export default function OrdersTable() {
         renderCell: (params) => {
           const totalUnits = params.row.items.reduce(
             (acc, it) => acc + it.quantity,
-            0
+            0,
           );
           return (
             <Typography variant="body2">
@@ -177,7 +183,7 @@ export default function OrdersTable() {
         ),
       },
     ],
-    [dialogs, loadOrders],
+    [handleEditStatus, handleViewDetails],
   );
 
   return (

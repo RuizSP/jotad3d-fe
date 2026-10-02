@@ -4,6 +4,7 @@ import {
   useReducer,
   useEffect,
   type ReactNode,
+  type ComponentType,
   Suspense,
   lazy,
 } from "react";
@@ -20,7 +21,7 @@ const TOOLBARSTORAGEKEY = "persist@toolbar";
 export type DialogItem = {
   id: string;
   module: string;
-  payload: any;
+  payload: object;
   title: string;
 };
 
@@ -115,7 +116,7 @@ export function AppToolbarProvider({ children }: { children: ReactNode }) {
 
         const LazyComponent = lazy(
           importer as () => Promise<{
-            default: React.ComponentType<any>;
+            default: ComponentType<object>;
           }>,
         );
 

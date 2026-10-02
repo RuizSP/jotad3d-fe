@@ -6,12 +6,13 @@ import { useEffect } from "react";
 export function AppToolbarContent() {
   const { dialog } = useAppToolbar();
   const { setOpen } = useOpenMenu();
+  const hasDialogs = dialog.length > 0;
 
   useEffect(() => {
-    if (!dialog.length) {
+    if (!hasDialogs) {
       setOpen(false);
     }
-  }, [dialog]);
+  }, [hasDialogs, setOpen]);
 
   return (
     <Stack direction="row" spacing={1.5} alignItems="center">

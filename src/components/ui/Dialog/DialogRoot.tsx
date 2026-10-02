@@ -7,7 +7,7 @@ import {
 import { useRef } from "react";
 import Draggable from "react-draggable";
 
-interface DialogRootProps<T = any> extends Omit<MuiDialogProps, "onClose"> {
+interface DialogRootProps<T = unknown> extends Omit<MuiDialogProps, "onClose"> {
   onClose?: (result?: T) => Promise<void>;
 }
 

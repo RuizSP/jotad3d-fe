@@ -45,10 +45,10 @@ export function SidebarNavItem({
           transform: "translateX(4px)",
           color: active ? "primary.dark" : "text.primary",
         },
-        ...((collapsed && {
+        ...(collapsed && {
           minWidth: 48,
           px: 1,
-        }) as any),
+        }),
         ...(active && {
           fontWeight: 600,
         }),

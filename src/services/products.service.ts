@@ -17,7 +17,9 @@ const getStoredProducts = (): Product[] => {
 const saveStoredProducts = (products: Product[]) => {
   try {
     localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(products));
-  } catch {}
+  } catch {
+    return;
+  }
 };
 
 export const productsService = {
@@ -36,11 +38,16 @@ export const productsService = {
             id: String(item.id),
             name: item.nome,
             price: Number(item.preco),
-            paintingPrice: item.preco_pintura != null ? Number(item.preco_pintura) : undefined,
+            paintingPrice:
+              item.preco_pintura != null
+                ? Number(item.preco_pintura)
+                : undefined,
             imageUrl: item.imagem_url || "",
             category: item.categoria || "Geral",
             description: item.descricao || "",
-            availableColors: Array.isArray(item.cores) ? item.cores : ["Preto", "Branco", "Dourado"],
+            availableColors: Array.isArray(item.cores)
+              ? item.cores
+              : ["Preto", "Branco", "Dourado"],
             dimensions: item.dimensoes || undefined,
             material: item.material || "PLA Premium",
             inStock: true,
@@ -48,7 +55,9 @@ export const productsService = {
 
           return [...customList, ...remoteMapped];
         }
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao carregar produtos do Supabase.", error);
+      }
     }
 
     return customList;
@@ -90,7 +99,9 @@ export const productsService = {
         if (!error && data) {
           newProduct.id = String(data.id);
         }
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao salvar produto no Supabase.", error);
+      }
     }
 
     return newProduct;
@@ -111,10 +122,11 @@ export const productsService = {
 
     if (isSupabaseConfigured && supabase && !id.startsWith("3d-custom")) {
       try {
-        const patch: Record<string, any> = {};
+        const patch: Record<string, unknown> = {};
         if (updates.name) patch.nome = updates.name;
         if (updates.price !== undefined) patch.preco = updates.price;
-        if (updates.paintingPrice !== undefined) patch.preco_pintura = updates.paintingPrice;
+        if (updates.paintingPrice !== undefined)
+          patch.preco_pintura = updates.paintingPrice;
         if (updates.imageUrl) patch.imagem_url = updates.imageUrl;
         if (updates.description) patch.descricao = updates.description;
         if (updates.category) patch.categoria = updates.category;
@@ -123,7 +135,9 @@ export const productsService = {
         if (updates.availableColors) patch.cores = updates.availableColors;
 
         await supabase.from("produtos").update(patch).eq("id", id);
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao atualizar produto no Supabase.", error);
+      }
     }
 
     return updatedProduct;
@@ -137,7 +151,9 @@ export const productsService = {
     if (isSupabaseConfigured && supabase && !id.startsWith("3d-custom")) {
       try {
         await supabase.from("produtos").delete().eq("id", id);
-      } catch {}
+      } catch (error) {
+        console.error("Falha ao excluir produto no Supabase.", error);
+      }
     }
 
     return true;

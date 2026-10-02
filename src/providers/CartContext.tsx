@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 
 export interface CartItem {
   id: string;
@@ -41,7 +47,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-    } catch {}
+    } catch {
+      return;
+    }
   }, [items]);
 
   const getItemKey = (item: { id: string; color?: string }) =>
@@ -53,7 +61,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = prev.find((i) => getItemKey(i) === key);
       if (existing) {
         return prev.map((i) =>
-          getItemKey(i) === key ? { ...i, quantity: i.quantity + (item.quantity || 1) } : i
+          getItemKey(i) === key
+            ? { ...i, quantity: i.quantity + (item.quantity || 1) }
+            : i,
         );
       }
       return [...prev, { ...item, quantity: item.quantity || 1 }];
@@ -62,7 +72,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeItem = (compositeId: string) => {
-    setItems((prev) => prev.filter((i) => getItemKey(i) !== compositeId && i.id !== compositeId));
+    setItems((prev) =>
+      prev.filter((i) => getItemKey(i) !== compositeId && i.id !== compositeId),
+    );
   };
 
   const updateQuantity = (compositeId: string, quantity: number) => {
@@ -71,7 +83,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
     setItems((prev) =>
-      prev.map((i) => (getItemKey(i) === compositeId || i.id === compositeId ? { ...i, quantity } : i))
+      prev.map((i) =>
+        getItemKey(i) === compositeId || i.id === compositeId
+          ? { ...i, quantity }
+          : i,
+      ),
     );
   };
 
@@ -86,7 +102,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   const totalPrice = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
-    0
+    0,
   );
 
   return (

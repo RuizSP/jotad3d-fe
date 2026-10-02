@@ -1,5 +1,9 @@
 import { Box, Stack, Typography, useTheme, alpha } from "@mui/material";
-import { type GridColDef, DataGrid } from "@mui/x-data-grid";
+import {
+  type GridColDef,
+  type GridFilterModel,
+  DataGrid,
+} from "@mui/x-data-grid";
 import { SVG } from "../SVG";
 
 interface DataTableProps<T> {
@@ -9,10 +13,7 @@ interface DataTableProps<T> {
   height?: number | string;
   disableRowSelectionOnClick?: boolean;
   loading?: boolean;
-  filterModel?: {
-    items: any[];
-    quickFilterValues: any[];
-  };
+  filterModel?: GridFilterModel;
 }
 
 export default function DataTableTable<T>({
@@ -67,7 +68,7 @@ export default function DataTableTable<T>({
   return (
     <Box
       sx={{
-        height: "100%", 
+        height: "100%",
         minWidth: 0,
         overflowX: "auto",
         overflowY: "auto",
