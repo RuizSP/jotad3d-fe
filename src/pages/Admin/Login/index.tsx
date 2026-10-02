@@ -111,7 +111,11 @@ export default function AdminLogin() {
             size="large"
             disabled={submitting}
           >
-            {submitting ? <CircularProgress size={22} color="inherit" /> : "Entrar"}
+            {submitting ? (
+              <CircularProgress size={22} color="inherit" />
+            ) : (
+              "Entrar"
+            )}
           </Button>
         </Stack>
       </Paper>

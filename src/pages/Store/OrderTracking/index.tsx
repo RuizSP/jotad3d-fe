@@ -85,8 +85,8 @@ export default function OrderTracking() {
               color="text.secondary"
               sx={{ mt: 1, maxWidth: 500, mx: "auto" }}
             >
-              Insira o código de acompanhamento (ex: JD-AB12CD34EF56) para consultar
-              o status do pedido.
+              Insira o código de acompanhamento (ex: JD-AB12CD34EF56) para
+              consultar o status do pedido.
             </Typography>
 
             <Paper

@@ -83,11 +83,7 @@ export const storeLocationsService = {
           .eq("id", input.id)
           .select("*")
           .single()
-      : supabase
-          .from("store_locations")
-          .insert(payload)
-          .select("*")
-          .single();
+      : supabase.from("store_locations").insert(payload).select("*").single();
 
     const { data, error } = await query;
     if (error) throw error;

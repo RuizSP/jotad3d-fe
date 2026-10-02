@@ -33,20 +33,22 @@ interface StoreLocationFormData {
   instructions: string;
 }
 
-const storeLocationSchema: Yup.ObjectSchema<StoreLocationFormData> = Yup.object({
-  name: Yup.string().trim().required("Informe o nome do local"),
-  addressLine: Yup.string().trim().required("Informe a rua"),
-  number: Yup.string().trim().required("Informe o número"),
-  complement: Yup.string().defined(),
-  neighborhood: Yup.string().trim().required("Informe o bairro"),
-  city: Yup.string().trim().required("Informe a cidade"),
-  state: Yup.string()
-    .trim()
-    .length(2, "Use a sigla de duas letras")
-    .required("Informe o estado"),
-  postalCode: Yup.string().trim().required("Informe o CEP"),
-  instructions: Yup.string().defined(),
-});
+const storeLocationSchema: Yup.ObjectSchema<StoreLocationFormData> = Yup.object(
+  {
+    name: Yup.string().trim().required("Informe o nome do local"),
+    addressLine: Yup.string().trim().required("Informe a rua"),
+    number: Yup.string().trim().required("Informe o número"),
+    complement: Yup.string().defined(),
+    neighborhood: Yup.string().trim().required("Informe o bairro"),
+    city: Yup.string().trim().required("Informe a cidade"),
+    state: Yup.string()
+      .trim()
+      .length(2, "Use a sigla de duas letras")
+      .required("Informe o estado"),
+    postalCode: Yup.string().trim().required("Informe o CEP"),
+    instructions: Yup.string().defined(),
+  },
+);
 
 const toFormData = (location: StoreLocation | null): StoreLocationFormData => ({
   name: location?.name ?? "",
@@ -72,7 +74,11 @@ export default function StoreLocationSettings() {
   }
 
   if (locationQuery.error) {
-    return <Alert severity="error">Não foi possível carregar a configuração da loja.</Alert>;
+    return (
+      <Alert severity="error">
+        Não foi possível carregar a configuração da loja.
+      </Alert>
+    );
   }
 
   return (
@@ -97,11 +103,7 @@ export default function StoreLocationSettings() {
   );
 }
 
-function StoreLocationForm({
-  location,
-}: {
-  location: StoreLocation | null;
-}) {
+function StoreLocationForm({ location }: { location: StoreLocation | null }) {
   const [formError, setFormError] = useState("");
   const saveLocation = useSaveStoreLocation();
   const { data, changeValue, validation, validationErrors } =
@@ -141,7 +143,8 @@ function StoreLocationForm({
             Endereço para retirada
           </Typography>
           <Typography variant="body2" color="text.secondary" mt={0.5}>
-            Este endereço será exibido aos clientes que escolherem retirar o pedido.
+            Este endereço será exibido aos clientes que escolherem retirar o
+            pedido.
           </Typography>
         </Box>
 
