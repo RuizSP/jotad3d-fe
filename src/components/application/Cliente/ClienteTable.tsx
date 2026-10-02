@@ -1,11 +1,11 @@
 import type { GridColDef } from "@mui/x-data-grid";
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { MessageSquareShare } from "lucide-react";
 import { DataTable } from "../../ui/DataTable";
 import { Filter } from "../../ui/Filter";
 import { usePagination } from "../../../hooks/usePagination";
-import { ordersService } from "../../../services/orders.service";
+import { useOrders } from "../../../hooks/useOrders";
 
 interface CustomerRecord {
   id: string;
@@ -18,43 +18,39 @@ interface CustomerRecord {
 }
 
 export default function ClienteTable() {
-  const [customers, setCustomers] = useState<CustomerRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: orders = [], isPending: loading } = useOrders();
 
   const { page, perPage, handleChangePage, handleChangeRowsPerPage } =
     usePagination();
 
-  useEffect(() => {
-    ordersService.getAll().then((orders) => {
-      const map = new Map<string, CustomerRecord>();
+  const customers = useMemo(() => {
+    const map = new Map<string, CustomerRecord>();
 
-      orders.forEach((o) => {
-        const key = o.whatsapp || o.customerName;
-        const existing = map.get(key);
+    orders.forEach((order) => {
+      const key = order.whatsapp || order.customerName;
+      const existing = map.get(key);
 
-        if (existing) {
-          existing.orderCount += 1;
-          existing.totalSpent += o.totalAmount;
-          if (new Date(o.createdAt) > new Date(existing.lastOrderDate)) {
-            existing.lastOrderDate = o.createdAt;
-          }
-        } else {
-          map.set(key, {
-            id: o.id,
-            name: o.customerName,
-            whatsapp: o.whatsapp,
-            cidade: o.address?.cidade || "-",
-            orderCount: 1,
-            totalSpent: o.totalAmount,
-            lastOrderDate: o.createdAt,
-          });
+      if (existing) {
+        existing.orderCount += 1;
+        existing.totalSpent += order.totalAmount;
+        if (new Date(order.createdAt) > new Date(existing.lastOrderDate)) {
+          existing.lastOrderDate = order.createdAt;
         }
-      });
-
-      setCustomers(Array.from(map.values()));
-      setLoading(false);
+      } else {
+        map.set(key, {
+          id: order.id,
+          name: order.customerName,
+          whatsapp: order.whatsapp,
+          cidade: order.address?.cidade || "-",
+          orderCount: 1,
+          totalSpent: order.totalAmount,
+          lastOrderDate: order.createdAt,
+        });
+      }
     });
-  }, []);
+
+    return Array.from(map.values());
+  }, [orders]);
 
   const columns = useMemo(
     (): GridColDef<CustomerRecord>[] => [

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -20,8 +20,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Page } from "../../../components/ui/Page";
-import { ordersService } from "../../../services/orders.service";
-import type { Order } from "../../../shared/interfaces/Order";
+import { useOrderByCodeOrNumber } from "../../../hooks/useOrders";
 import { ORDER_STATUS_STEPS } from "../../../shared/interfaces/Order";
 import StatusBadge from "../../../components/common/StatusBadge";
 import ColorSwatch from "../../../components/common/ColorSwatch";
@@ -29,45 +28,38 @@ import ColorSwatch from "../../../components/common/ColorSwatch";
 export default function OrderTracking() {
   const [searchParams] = useSearchParams();
   const initialCode = searchParams.get("code") || "";
-  const [searchInput, setSearchInput] = useState(initialCode);
-  const [order, setOrder] = useState<Order | null>(null);
-  const [searched, setSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const searchRequestId = useRef(0);
+  const [searchState, setSearchState] = useState(() => ({
+    sourceCode: initialCode,
+    input: initialCode,
+    query: initialCode,
+  }));
+  const currentSearch =
+    searchState.sourceCode === initialCode
+      ? searchState
+      : { sourceCode: initialCode, input: initialCode, query: initialCode };
+  const { input: searchInput, query: searchCode } = currentSearch;
+  const {
+    data: order = null,
+    error,
+    isFetched,
+    isFetching: loading,
+    refetch,
+  } = useOrderByCodeOrNumber(searchCode);
+  const searched = Boolean(searchCode) && isFetched;
 
   const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
   const cleanPhone = companyPhone.replace(/\D/g, "");
 
-  const handleSearch = useCallback(async (codeToSearch: string) => {
-    if (!codeToSearch.trim()) return;
-    const requestId = ++searchRequestId.current;
-    setLoading(true);
-    setSearched(true);
-    try {
-      const found = await ordersService.getByCodeOrNumber(codeToSearch);
-      if (requestId === searchRequestId.current) {
-        setOrder(found);
-      }
-    } catch (error) {
-      if (requestId === searchRequestId.current) {
-        setOrder(null);
-        console.error("Falha ao buscar pedido.", error);
-      }
-    } finally {
-      if (requestId === searchRequestId.current) {
-        setLoading(false);
-      }
-    }
-  }, []);
+  const handleSearch = () => {
+    const code = currentSearch.input.trim();
+    if (!code) return;
 
-  useEffect(() => {
-    if (initialCode) {
-      void handleSearch(initialCode);
+    if (code.toUpperCase() === currentSearch.query.trim().toUpperCase()) {
+      void refetch();
+    } else {
+      setSearchState({ ...currentSearch, input: code, query: code });
     }
-    return () => {
-      searchRequestId.current += 1;
-    };
-  }, [initialCode, handleSearch]);
+  };
 
   const currentStepIndex = order
     ? ORDER_STATUS_STEPS.findIndex((s) => s.key === order.status)
@@ -90,7 +82,7 @@ export default function OrderTracking() {
               color="text.secondary"
               sx={{ mt: 1, maxWidth: 500, mx: "auto" }}
             >
-              Insira o código de acompanhamento (ex: JD-XXXXX) ou o número do
+              Insira o código de acompanhamento (ex: JD-AB12CD34) ou o número do
               pedido para ver o status em tempo real.
             </Typography>
 
@@ -109,14 +101,14 @@ export default function OrderTracking() {
               }}
             >
               <TextField
-                placeholder="Código (ex: JD-9A4B2) ou número"
+                placeholder="Código (ex: JD-AB12CD34) ou número"
                 variant="standard"
                 fullWidth
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) =>
-                  e.key === "Enter" && handleSearch(searchInput)
+                onChange={(e) =>
+                  setSearchState({ ...currentSearch, input: e.target.value })
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 InputProps={{
                   disableUnderline: true,
                   sx: { px: 2, fontSize: "0.95rem" },
@@ -125,7 +117,7 @@ export default function OrderTracking() {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => handleSearch(searchInput)}
+                onClick={handleSearch}
                 startIcon={
                   loading ? (
                     <CircularProgress size={16} color="inherit" />
@@ -149,8 +141,9 @@ export default function OrderTracking() {
               severity="warning"
               sx={{ borderRadius: 3, maxWidth: 540, mx: "auto" }}
             >
-              Nenhum pedido encontrado para o código informado. Verifique se
-              digitou corretamente ou consulte o atendente no WhatsApp.
+              {error
+                ? "Não foi possível consultar o pedido. Tente novamente."
+                : "Nenhum pedido encontrado para o código informado. Verifique se digitou corretamente ou consulte o atendente no WhatsApp."}
             </Alert>
           ) : order ? (
             <Paper

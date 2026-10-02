@@ -1,41 +1,22 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Box, Typography, Grid, Stack, Button } from "@mui/material";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProductCard from "../ProductCard";
-import { productsService } from "../../../services/products.service";
-import type { Product } from "../../../shared/interfaces/Product";
+import { useProducts } from "../../../hooks/useProducts";
 
 export default function RelatedProducts({
   currentCategory,
 }: {
   currentCategory?: string;
 }) {
-  const [products, setProducts] = useState<Product[]>([]);
-
-  useEffect(() => {
-    let active = true;
-
-    productsService
-      .getAll()
-      .then((list) => {
-        if (!active) return;
-
-        const filtered = currentCategory
-          ? list.filter((p) => p.category === currentCategory)
-          : list;
-        setProducts(filtered.slice(0, 4));
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          console.error("Falha ao carregar produtos relacionados.", error);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [currentCategory]);
+  const { data: allProducts = [] } = useProducts();
+  const products = useMemo(() => {
+    const filtered = currentCategory
+      ? allProducts.filter((product) => product.category === currentCategory)
+      : allProducts;
+    return filtered.slice(0, 4);
+  }, [allProducts, currentCategory]);
 
   if (products.length === 0) return null;
 

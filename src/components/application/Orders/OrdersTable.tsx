@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { usePagination } from "../../../hooks/usePagination";
 import { DataTable } from "../../ui/DataTable";
 import { Filter } from "../../ui/Filter";
@@ -6,42 +6,24 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { MessageSquareShare, Edit, Eye } from "lucide-react";
 import { useDialogs } from "@toolpad/core";
-import { ordersService } from "../../../services/orders.service";
+import { useOrders } from "../../../hooks/useOrders";
 import type { Order } from "../../../shared/interfaces/Order";
 import StatusBadge from "../../common/StatusBadge";
 import OrderStatusDialog from "../../dialogs/OrderStatusDialog";
 import OrderDetailsDialog from "../../dialogs/OrderDetailsDialog";
 
 export default function OrdersTable() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: orders = [], isPending: loading } = useOrders();
   const dialogs = useDialogs();
 
   const { page, perPage, handleChangePage, handleChangeRowsPerPage } =
     usePagination();
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await ordersService.getAll();
-      setOrders(data);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
-
   const handleEditStatus = useCallback(
     async (order: Order) => {
-      const updated = await dialogs.open(OrderStatusDialog, order);
-      if (updated) {
-        loadOrders();
-      }
+      await dialogs.open(OrderStatusDialog, order);
     },
-    [dialogs, loadOrders],
+    [dialogs],
   );
 
   const handleViewDetails = useCallback(

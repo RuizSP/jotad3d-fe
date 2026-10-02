@@ -1,7 +1,5 @@
-import { supabase, isSupabaseConfigured } from "./supabase";
+import { supabase } from "./supabase";
 import type { Order, OrderStatus } from "../shared/interfaces/Order";
-
-const LOCAL_STORAGE_ORDERS_KEY = "@jotad3d:orders";
 
 interface SupabaseOrderItemRow {
   produto_id: string | number | null;
@@ -13,6 +11,9 @@ interface SupabaseOrderItemRow {
 
 interface SupabaseOrderRow {
   id: string | number;
+  access_code: string | null;
+  order_number: number | null;
+  status: OrderStatus | null;
   concluido: boolean | null;
   pronto_para_entrega: boolean | null;
   cliente_nome: string;
@@ -31,89 +32,73 @@ interface SupabaseOrderRow {
   data_criacao: string | null;
 }
 
+const requireSupabase = () => {
+  if (!supabase) {
+    throw new Error("Supabase não está configurado para persistir pedidos.");
+  }
+  return supabase;
+};
+
 const generateAccessCode = (): string => {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let result = "JD-";
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 8; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 };
 
-const getLocalOrders = (): Order[] => {
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_ORDERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
+const mapOrder = (order: SupabaseOrderRow): Order => {
+  const status =
+    order.status ||
+    (order.concluido
+      ? "finalizado"
+      : order.pronto_para_entrega
+        ? "pronto"
+        : "producao");
 
-const saveLocalOrder = (order: Order) => {
-  try {
-    const current = getLocalOrders();
-    localStorage.setItem(
-      LOCAL_STORAGE_ORDERS_KEY,
-      JSON.stringify([order, ...current]),
-    );
-  } catch {
-    return;
-  }
+  return {
+    id: String(order.id),
+    accessCode:
+      order.access_code ||
+      `JD-${String(order.id).replaceAll("-", "").slice(0, 8).toUpperCase()}`,
+    orderNumber: Number(order.order_number),
+    customerName: order.cliente_nome,
+    whatsapp: order.whatsapp || "",
+    email: order.email || "",
+    address: {
+      cep: order.cep || "",
+      rua: order.endereco || "",
+      numero: order.numero || "",
+      bairro: order.bairro || "",
+      cidade: order.cidade || "",
+      complemento: order.complemento || "",
+    },
+    items: (order.pedido_itens || []).map((item) => ({
+      productId: String(item.produto_id ?? ""),
+      productName: item.produtos?.nome || "Peça 3D",
+      imageUrl: item.produtos?.imagem_url || "",
+      quantity: item.quantidade,
+      unitPrice: Number(item.preco_unitario),
+      color: item.cor_escolhida || "Preto",
+    })),
+    totalAmount: Number(order.valor_total),
+    status,
+    paid: Boolean(order.pago),
+    notes: order.observacoes || "",
+    createdAt: order.data_criacao || "",
+  };
 };
 
 export const ordersService = {
   async getAll(): Promise<Order[]> {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("pedidos")
-          .select("*, pedido_itens(*, produtos(*))")
-          .order("data_criacao", { ascending: false });
+    const { data, error } = await requireSupabase()
+      .from("pedidos")
+      .select("*, pedido_itens(*, produtos(*))")
+      .order("data_criacao", { ascending: false });
 
-        if (!error && data && data.length > 0) {
-          return data.map((d: SupabaseOrderRow) => {
-            let status: OrderStatus = "recebido";
-            if (d.concluido) status = "finalizado";
-            else if (d.pronto_para_entrega) status = "pronto";
-            else status = "producao";
-
-            return {
-              id: String(d.id),
-              accessCode: `JD-${String(d.id).slice(0, 5).toUpperCase()}`,
-              orderNumber: Math.floor(1000 + Math.random() * 9000),
-              customerName: d.cliente_nome,
-              whatsapp: d.whatsapp || "",
-              email: d.email || "",
-              address: {
-                cep: d.cep || "",
-                rua: d.endereco || "",
-                numero: d.numero || "",
-                bairro: d.bairro || "",
-                cidade: d.cidade || "",
-                complemento: d.complemento || "",
-              },
-              items: (d.pedido_itens || []).map((it: SupabaseOrderItemRow) => ({
-                productId: String(it.produto_id),
-                productName: it.produtos?.nome || "Peça 3D",
-                imageUrl: it.produtos?.imagem_url || "",
-                quantity: it.quantidade,
-                unitPrice: Number(it.preco_unitario),
-                color: it.cor_escolhida || "Preto",
-              })),
-              totalAmount: Number(d.valor_total),
-              status,
-              paid: Boolean(d.pago),
-              notes: d.observacoes || "",
-              createdAt: d.data_criacao || new Date().toISOString(),
-            };
-          });
-        }
-      } catch (error) {
-        console.error("Falha ao carregar pedidos do Supabase.", error);
-      }
-    }
-
-    return getLocalOrders();
+    if (error) throw error;
+    return ((data || []) as SupabaseOrderRow[]).map(mapOrder);
   },
 
   async create(
@@ -123,60 +108,67 @@ export const ordersService = {
     >,
   ): Promise<Order> {
     const accessCode = generateAccessCode();
-    const orderNumber = Math.floor(1000 + Math.random() * 9000);
-    const createdAt = new Date().toISOString();
+    const client = requireSupabase();
+    const { data: insertedOrder, error: orderError } = await client
+      .from("pedidos")
+      .insert({
+        access_code: accessCode,
+        status: "recebido",
+        cliente_nome: orderInput.customerName,
+        whatsapp: orderInput.whatsapp,
+        email: orderInput.email || null,
+        cep: orderInput.address.cep,
+        endereco: orderInput.address.rua,
+        numero: orderInput.address.numero,
+        bairro: orderInput.address.bairro,
+        cidade: orderInput.address.cidade,
+        complemento: orderInput.address.complemento || null,
+        valor_total: orderInput.totalAmount,
+        pago: false,
+        pronto_para_entrega: false,
+        concluido: false,
+        observacoes: orderInput.notes || null,
+      })
+      .select("id, access_code, order_number, status, data_criacao")
+      .single();
 
-    const newOrder: Order = {
-      ...orderInput,
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      accessCode,
-      orderNumber,
-      createdAt,
-      status: "recebido",
-      paid: false,
-    };
+    if (orderError) throw orderError;
+    if (!insertedOrder)
+      throw new Error("O Supabase não retornou o pedido criado.");
 
-    saveLocalOrder(newOrder);
+    if (orderInput.items.length > 0) {
+      const itemsToInsert = orderInput.items.map((item) => ({
+        pedido_id: insertedOrder.id,
+        produto_id: item.productId.startsWith("3d-") ? null : item.productId,
+        quantidade: item.quantity,
+        preco_unitario: item.unitPrice,
+        cor_escolhida: item.color || "Padrão",
+      }));
+      const { error: itemsError } = await client
+        .from("pedido_itens")
+        .insert(itemsToInsert);
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const fullAddress = `${orderInput.address.rua}, ${orderInput.address.numero} - ${orderInput.address.bairro}, ${orderInput.address.cidade} - CEP: ${orderInput.address.cep}${orderInput.address.complemento ? ` (${orderInput.address.complemento})` : ""}`;
-
-        const { data: insertedOrder, error: orderError } = await supabase
+      if (itemsError) {
+        const { error: rollbackError } = await client
           .from("pedidos")
-          .insert({
-            cliente_nome: orderInput.customerName,
-            cidade: orderInput.address.cidade,
-            valor_total: orderInput.totalAmount,
-            pago: false,
-            pronto_para_entrega: false,
-            concluido: false,
-            observacoes: `WhatsApp: ${orderInput.whatsapp} | Endereço: ${fullAddress} | Código: ${accessCode}`,
-          })
-          .select("id")
-          .single();
-
-        if (!orderError && insertedOrder) {
-          newOrder.id = String(insertedOrder.id);
-
-          const itemsToInsert = orderInput.items.map((item) => ({
-            pedido_id: insertedOrder.id,
-            produto_id: item.productId.startsWith("3d-")
-              ? null
-              : item.productId,
-            quantidade: item.quantity,
-            preco_unitario: item.unitPrice,
-            cor_escolhida: item.color || "Padrão",
-          }));
-
-          await supabase.from("pedido_itens").insert(itemsToInsert);
+          .delete()
+          .eq("id", insertedOrder.id);
+        if (rollbackError) {
+          console.error("Falha ao remover pedido incompleto.", rollbackError);
         }
-      } catch (error) {
-        console.error("Falha ao salvar pedido no Supabase.", error);
+        throw itemsError;
       }
     }
 
-    return newOrder;
+    return {
+      ...orderInput,
+      id: String(insertedOrder.id),
+      accessCode: insertedOrder.access_code,
+      orderNumber: Number(insertedOrder.order_number),
+      createdAt: insertedOrder.data_criacao,
+      status: insertedOrder.status as OrderStatus,
+      paid: false,
+    };
   },
 
   async updateStatus(
@@ -185,103 +177,45 @@ export const ordersService = {
     paid?: boolean,
     notes?: string,
   ): Promise<boolean> {
-    const local = getLocalOrders();
-    const updated = local.map((o) => {
-      if (o.id === id || o.accessCode === id) {
-        return {
-          ...o,
-          status,
-          paid: paid !== undefined ? paid : o.paid,
-          notes: notes !== undefined ? notes : o.notes,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return o;
-    });
-    localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(updated));
+    const patch: Record<string, unknown> = {
+      status,
+      pronto_para_entrega: status === "pronto" || status === "finalizado",
+      concluido: status === "finalizado",
+    };
+    if (paid !== undefined) patch.pago = paid;
+    if (notes !== undefined) patch.observacoes = notes;
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const patch: Record<string, unknown> = {};
-        if (paid !== undefined) patch.pago = paid;
-        if (notes !== undefined) patch.observacoes = notes;
-        if (status === "pronto" || status === "finalizado")
-          patch.pronto_para_entrega = true;
-        if (status === "finalizado") patch.concluido = true;
+    const { data, error } = await requireSupabase()
+      .from("pedidos")
+      .update(patch)
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
 
-        await supabase.from("pedidos").update(patch).eq("id", id);
-      } catch (error) {
-        console.error("Falha ao atualizar pedido no Supabase.", error);
-      }
-    }
-
-    return true;
+    if (error) throw error;
+    return Boolean(data);
   },
 
   async getByCodeOrNumber(query: string): Promise<Order | null> {
     const cleanQuery = query.trim().toUpperCase();
-    const localOrders = getLocalOrders();
-    const foundLocal = localOrders.find(
-      (o) =>
-        o.accessCode.toUpperCase() === cleanQuery ||
-        String(o.orderNumber) === cleanQuery ||
-        o.id === cleanQuery,
-    );
-
-    if (foundLocal) {
-      return foundLocal;
+    const safeQuery = cleanQuery.replace(/[^A-Z0-9-]/g, "");
+    const filters = [`access_code.eq.${safeQuery}`];
+    if (/^\d+$/.test(cleanQuery)) {
+      filters.push(`order_number.eq.${Number(cleanQuery)}`);
+    }
+    if (/^[0-9A-F-]{36}$/.test(cleanQuery)) {
+      filters.push(`id.eq.${cleanQuery}`);
     }
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("pedidos")
-          .select("*, pedido_itens(*)")
-          .or(`id.eq.${cleanQuery},cliente_nome.ilike.%${cleanQuery}%`)
-          .limit(1)
-          .maybeSingle();
+    const { data, error } = await requireSupabase()
+      .from("pedidos")
+      .select("*, pedido_itens(*, produtos(*))")
+      .or(filters.join(","))
+      .limit(1)
+      .maybeSingle();
 
-        if (!error && data) {
-          let status: OrderStatus = "recebido";
-          if (data.concluido) status = "finalizado";
-          else if (data.pronto_para_entrega) status = "pronto";
-          else status = "producao";
-
-          return {
-            id: String(data.id),
-            accessCode: cleanQuery,
-            orderNumber: 1000,
-            customerName: data.cliente_nome,
-            whatsapp: "",
-            address: {
-              cep: "",
-              rua: "",
-              numero: "",
-              bairro: "",
-              cidade: data.cidade,
-            },
-            items: (data.pedido_itens || []).map(
-              (it: SupabaseOrderItemRow) => ({
-                productId: String(it.produto_id),
-                productName: "Peça Impressa 3D",
-                imageUrl: "",
-                quantity: it.quantidade,
-                unitPrice: Number(it.preco_unitario),
-                color: it.cor_escolhida,
-              }),
-            ),
-            totalAmount: Number(data.valor_total),
-            status,
-            paid: Boolean(data.pago),
-            createdAt: data.data_criacao || new Date().toISOString(),
-          };
-        }
-      } catch (error) {
-        console.error("Falha ao buscar pedido no Supabase.", error);
-      }
-    }
-
-    return null;
+    if (error) throw error;
+    return data ? mapOrder(data as SupabaseOrderRow) : null;
   },
 
   buildWhatsAppMessage(order: Order, companyNumber: string): string {

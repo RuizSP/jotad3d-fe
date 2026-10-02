@@ -11,8 +11,12 @@ import {
 } from "@mui/material";
 import type { DialogProps } from "@toolpad/core";
 import { Dialog } from "../ui/Dialog";
-import { ORDER_STATUS_STEPS, type Order, type OrderStatus } from "../../shared/interfaces/Order";
-import { ordersService } from "../../services/orders.service";
+import {
+  ORDER_STATUS_STEPS,
+  type Order,
+  type OrderStatus,
+} from "../../shared/interfaces/Order";
+import { useUpdateOrderStatus } from "../../hooks/useOrders";
 import StatusBadge from "../common/StatusBadge";
 
 export default function OrderStatusDialog({
@@ -20,20 +24,29 @@ export default function OrderStatusDialog({
   onClose,
   payload,
 }: DialogProps<Order, boolean>) {
-  const [status, setStatus] = useState<OrderStatus>(payload?.status || "recebido");
+  const [status, setStatus] = useState<OrderStatus>(
+    payload?.status || "recebido",
+  );
   const [paid, setPaid] = useState<boolean>(payload?.paid || false);
-  const [cancellationReason, setCancellationReason] = useState<string>(payload?.notes || "");
-  const [loading, setLoading] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState<string>(
+    payload?.notes || "",
+  );
+  const updateOrderStatus = useUpdateOrderStatus();
+  const loading = updateOrderStatus.isPending;
 
   if (!payload) return null;
 
   const handleSubmit = async () => {
-    setLoading(true);
     try {
-      await ordersService.updateStatus(payload.id, status, paid, cancellationReason);
-      await onClose(true);
-    } finally {
-      setLoading(false);
+      const updated = await updateOrderStatus.mutateAsync({
+        id: payload.id,
+        status,
+        paid,
+        notes: cancellationReason,
+      });
+      if (updated) await onClose(true);
+    } catch {
+      return;
     }
   };
 
@@ -47,14 +60,20 @@ export default function OrderStatusDialog({
       <Dialog.Content>
         <Stack spacing={2.5}>
           <Box>
-            <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight="700">
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              textTransform="uppercase"
+              fontWeight="700"
+            >
               Cliente
             </Typography>
             <Typography variant="body1" fontWeight="800">
               {payload.customerName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Código: {payload.accessCode} • Total: R$ {payload.totalAmount.toFixed(2)}
+              Código: {payload.accessCode} • Total: R${" "}
+              {payload.totalAmount.toFixed(2)}
             </Typography>
           </Box>
 
@@ -111,10 +130,7 @@ export default function OrderStatusDialog({
           <Dialog.ActionCancel onClick={() => onClose(false)}>
             Cancelar
           </Dialog.ActionCancel>
-          <Dialog.ActionSubmit
-            onClick={handleSubmit}
-            loading={loading}
-          >
+          <Dialog.ActionSubmit onClick={handleSubmit} loading={loading}>
             Salvar Alterações
           </Dialog.ActionSubmit>
         </Dialog.FooterActions>

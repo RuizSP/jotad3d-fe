@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { usePagination } from "../../../hooks/usePagination";
 import { DataTable } from "../../ui/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
@@ -27,63 +27,38 @@ import {
   Box as BoxIcon,
 } from "lucide-react";
 import { useDialogs } from "@toolpad/core";
-import { productsService } from "../../../services/products.service";
+import { useDeleteProduct, useProducts } from "../../../hooks/useProducts";
 import type { Product } from "../../../shared/interfaces/Product";
 import ProductFormDialog from "../../dialogs/ProductFormDialog";
 import ColorSwatch from "../../common/ColorSwatch";
 
 export default function ProductsTable() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isPending: loading } = useProducts();
+  const deleteProduct = useDeleteProduct();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteCandidate, setDeleteCandidate] = useState<Product | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const deleting = deleteProduct.isPending;
 
   const dialogs = useDialogs();
   const { page, perPage, handleChangePage, handleChangeRowsPerPage } =
     usePagination();
 
-  const loadProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await productsService.getAll();
-      setProducts(data);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
-
   const handleCreate = async () => {
-    const created = await dialogs.open(ProductFormDialog, null);
-    if (created) {
-      loadProducts();
-    }
+    await dialogs.open(ProductFormDialog, null);
   };
 
   const handleEdit = useCallback(
     async (product: Product) => {
-      const updated = await dialogs.open(ProductFormDialog, product);
-      if (updated) {
-        loadProducts();
-      }
+      await dialogs.open(ProductFormDialog, product);
     },
-    [dialogs, loadProducts],
+    [dialogs],
   );
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!deleteCandidate) return;
-    setDeleting(true);
-    try {
-      await productsService.delete(deleteCandidate.id);
-      setDeleteCandidate(null);
-      await loadProducts();
-    } finally {
-      setDeleting(false);
-    }
+    deleteProduct.mutate(deleteCandidate.id, {
+      onSuccess: () => setDeleteCandidate(null),
+    });
   };
 
   const filteredProducts = useMemo(() => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as Yup from "yup";
 import {
   TextField,
@@ -12,7 +12,7 @@ import {
 import type { DialogProps } from "@toolpad/core";
 import { Dialog } from "../ui/Dialog";
 import { useForm } from "../../hooks/useForm";
-import { productsService } from "../../services/products.service";
+import { useCreateProduct, useUpdateProduct } from "../../hooks/useProducts";
 import { PRODUCT_COLORS, type Product } from "../../shared/interfaces/Product";
 import ColorSwatch from "../common/ColorSwatch";
 
@@ -47,14 +47,21 @@ const MATERIAL_OPTIONS = [
 ];
 
 const productValidationSchema = Yup.object().shape({
-  name: Yup.string().required("Informe o nome da peça").min(3, "Mínimo 3 caracteres"),
+  name: Yup.string()
+    .required("Informe o nome da peça")
+    .min(3, "Mínimo 3 caracteres"),
   category: Yup.string().required("Selecione a categoria"),
-  price: Yup.number().typeError("Preço inválido").positive("Deve ser maior que zero").required("Informe o preço"),
+  price: Yup.number()
+    .typeError("Preço inválido")
+    .positive("Deve ser maior que zero")
+    .required("Informe o preço"),
   material: Yup.string(),
   dimensions: Yup.string(),
   printTimeHours: Yup.number().typeError("Tempo inválido").min(0),
   description: Yup.string(),
-  imageUrl: Yup.string().url("URL de imagem inválida").required("Informe a URL da imagem"),
+  imageUrl: Yup.string()
+    .url("URL de imagem inválida")
+    .required("Informe a URL da imagem"),
 });
 
 export default function ProductFormDialog({
@@ -64,29 +71,27 @@ export default function ProductFormDialog({
 }: DialogProps<Product | null, boolean>) {
   const isEditing = Boolean(payload && payload.id);
   const [selectedColors, setSelectedColors] = useState<string[]>(
-    payload?.availableColors || ["Preto", "Branco", "Dourado"]
+    payload?.availableColors || ["Preto", "Branco", "Dourado"],
   );
-  const [submitting, setSubmitting] = useState(false);
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const submitting = createProduct.isPending || updateProduct.isPending;
+  const submissionInProgress = useRef(false);
 
-  const {
-    data,
-    changeValue,
-    validation,
-    validationErrors,
-    setData,
-  } = useForm<ProductFormData>({
-    initialValues: {
-      name: payload?.name || "",
-      category: payload?.category || "Decoração",
-      price: payload?.price || "",
-      material: payload?.material || "PLA Silk Premium",
-      dimensions: payload?.dimensions || "",
-      printTimeHours: payload?.printTimeHours || "",
-      description: payload?.description || "",
-      imageUrl: payload?.imageUrl || "",
-    },
-    schema: productValidationSchema,
-  });
+  const { data, changeValue, validation, validationErrors, setData } =
+    useForm<ProductFormData>({
+      initialValues: {
+        name: payload?.name || "",
+        category: payload?.category || "Decoração",
+        price: payload?.price || "",
+        material: payload?.material || "PLA Silk Premium",
+        dimensions: payload?.dimensions || "",
+        printTimeHours: payload?.printTimeHours || "",
+        description: payload?.description || "",
+        imageUrl: payload?.imageUrl || "",
+      },
+      schema: productValidationSchema,
+    });
 
   useEffect(() => {
     if (payload) {
@@ -100,7 +105,9 @@ export default function ProductFormDialog({
         description: payload.description || "",
         imageUrl: payload.imageUrl || "",
       });
-      setSelectedColors(payload.availableColors || ["Preto", "Branco", "Dourado"]);
+      setSelectedColors(
+        payload.availableColors || ["Preto", "Branco", "Dourado"],
+      );
     }
   }, [payload, setData]);
 
@@ -108,16 +115,18 @@ export default function ProductFormDialog({
     setSelectedColors((prev) =>
       prev.includes(colorName)
         ? prev.filter((c) => c !== colorName)
-        : [...prev, colorName]
+        : [...prev, colorName],
     );
   };
 
   const handleSubmit = async () => {
-    const isValid = await validation();
-    if (!isValid) return;
+    if (submissionInProgress.current) return;
 
-    setSubmitting(true);
+    submissionInProgress.current = true;
     try {
+      const isValid = await validation();
+      if (!isValid) return;
+
       const productPayload = {
         name: data.name,
         category: data.category,
@@ -125,29 +134,41 @@ export default function ProductFormDialog({
         paintingPrice: payload?.paintingPrice,
         material: data.material,
         dimensions: data.dimensions || undefined,
-        printTimeHours: data.printTimeHours ? Number(data.printTimeHours) : undefined,
+        printTimeHours: data.printTimeHours
+          ? Number(data.printTimeHours)
+          : undefined,
         description: data.description,
         imageUrl: data.imageUrl,
-        availableColors: selectedColors.length > 0 ? selectedColors : ["Preto", "Dourado"],
+        availableColors:
+          selectedColors.length > 0 ? selectedColors : ["Preto", "Dourado"],
         inStock: true,
       };
 
       if (isEditing && payload) {
-        await productsService.update(payload.id, productPayload);
+        await updateProduct.mutateAsync({
+          id: payload.id,
+          updates: productPayload,
+        });
       } else {
-        await productsService.create(productPayload);
+        await createProduct.mutateAsync(productPayload);
       }
 
       await onClose(true);
+    } catch {
+      return;
     } finally {
-      setSubmitting(false);
+      submissionInProgress.current = false;
     }
   };
 
   return (
     <Dialog.Root open={open} onClose={() => onClose(false)} maxWidth="md">
       <Dialog.Header>
-        <Dialog.Title title={isEditing ? "Editar Peça do Catálogo" : "Cadastrar Nova Peça 3D"} />
+        <Dialog.Title
+          title={
+            isEditing ? "Editar Peça do Catálogo" : "Cadastrar Nova Peça 3D"
+          }
+        />
         <Dialog.ActionClose onClose={async () => onClose(false)} />
       </Dialog.Header>
 
@@ -247,7 +268,13 @@ export default function ProductFormDialog({
           />
 
           <Box>
-            <Typography variant="caption" fontWeight="bold" textTransform="uppercase" display="block" mb={1}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              textTransform="uppercase"
+              display="block"
+              mb={1}
+            >
               Cores Disponíveis do Filamento:
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
@@ -280,10 +307,7 @@ export default function ProductFormDialog({
           <Dialog.ActionCancel onClick={() => onClose(false)}>
             Cancelar
           </Dialog.ActionCancel>
-          <Dialog.ActionSubmit
-            loading={submitting}
-            onClick={handleSubmit}
-          >
+          <Dialog.ActionSubmit loading={submitting} onClick={handleSubmit}>
             {isEditing ? "Salvar Alterações" : "Cadastrar Peça"}
           </Dialog.ActionSubmit>
         </Dialog.FooterActions>

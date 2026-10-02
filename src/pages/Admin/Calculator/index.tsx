@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo } from "react";
 import {
   Box,
   Grid,
@@ -33,16 +33,16 @@ import {
 import { useDialogs } from "@toolpad/core";
 import { Page } from "../../../components/ui/Page";
 import ProductFormDialog from "../../../components/dialogs/ProductFormDialog";
-import { productsService } from "../../../services/products.service";
-import type { Product } from "../../../shared/interfaces/Product";
+import { useProducts } from "../../../hooks/useProducts";
 
 const NEW_PRODUCT_VALUE = "__new__";
 
 export default function AdminCalculator() {
   const dialogs = useDialogs();
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState<string>(NEW_PRODUCT_VALUE);
+  const { data: products = [] } = useProducts();
+  const [selectedProductId, setSelectedProductId] =
+    useState<string>(NEW_PRODUCT_VALUE);
   const [modelName, setModelName] = useState("");
   const [materialType, setMaterialType] = useState("");
   const [weightGrams, setWeightGrams] = useState(0);
@@ -67,10 +67,6 @@ export default function AdminCalculator() {
 
   const [copiedSnackbar, setCopiedSnackbar] = useState(false);
 
-  useEffect(() => {
-    productsService.getAll().then(setProducts);
-  }, []);
-
   const handleProductSelect = (productId: string) => {
     setSelectedProductId(productId);
     if (productId === NEW_PRODUCT_VALUE) {
@@ -90,8 +86,7 @@ export default function AdminCalculator() {
   const calculations = useMemo(() => {
     const rawMaterial =
       (weightGrams * (1 + lossMarginPercent / 100) * spoolPriceKg) / 1000;
-    const energy =
-      printTimeHours * (printerPowerWatts / 1000) * energyCostKWh;
+    const energy = printTimeHours * (printerPowerWatts / 1000) * energyCostKWh;
     const depreciation =
       printerLifeHours > 0
         ? printTimeHours * (printerCost / printerLifeHours)
@@ -108,7 +103,7 @@ export default function AdminCalculator() {
     const paintingLabor = (paintingMinutes / 60) * laborHourlyRate;
     const paintingTotalCost = Number(paintingSuppliesCost) + paintingLabor;
     const suggestedPaintingAddon = Math.round(
-      paintingTotalCost * (1 + markupPercent / 100)
+      paintingTotalCost * (1 + markupPercent / 100),
     );
     const suggestedPriceWithPainting =
       Math.round((suggestedPrice + suggestedPaintingAddon) * 100) / 100;
@@ -171,9 +166,10 @@ export default function AdminCalculator() {
       id: selectedProductId !== NEW_PRODUCT_VALUE ? selectedProductId : "",
       name: modelName,
       price: Number(calculations.suggestedPrice.toFixed(2)),
-      paintingPrice: calculations.suggestedPaintingAddon > 0
-        ? calculations.suggestedPaintingAddon
-        : undefined,
+      paintingPrice:
+        calculations.suggestedPaintingAddon > 0
+          ? calculations.suggestedPaintingAddon
+          : undefined,
       material: materialType,
       printTimeHours: Number(printTimeHours),
       category: "Decoração",
@@ -285,11 +281,15 @@ export default function AdminCalculator() {
                         type="number"
                         label="Preço do Carretel (1kg)"
                         value={spoolPriceKg || ""}
-                        onChange={(e) => setSpoolPriceKg(Number(e.target.value))}
+                        onChange={(e) =>
+                          setSpoolPriceKg(Number(e.target.value))
+                        }
                         slotProps={{
                           input: {
                             startAdornment: (
-                              <InputAdornment position="start">R$</InputAdornment>
+                              <InputAdornment position="start">
+                                R$
+                              </InputAdornment>
                             ),
                           },
                         }}
@@ -375,10 +375,14 @@ export default function AdminCalculator() {
                         slotProps={{
                           input: {
                             startAdornment: (
-                              <InputAdornment position="start">R$</InputAdornment>
+                              <InputAdornment position="start">
+                                R$
+                              </InputAdornment>
                             ),
                             endAdornment: (
-                              <InputAdornment position="end">/kWh</InputAdornment>
+                              <InputAdornment position="end">
+                                /kWh
+                              </InputAdornment>
                             ),
                           },
                         }}
@@ -408,7 +412,9 @@ export default function AdminCalculator() {
                         slotProps={{
                           input: {
                             startAdornment: (
-                              <InputAdornment position="start">R$</InputAdornment>
+                              <InputAdornment position="start">
+                                R$
+                              </InputAdornment>
                             ),
                           },
                         }}
@@ -438,11 +444,15 @@ export default function AdminCalculator() {
                         type="number"
                         label="Embalagem/Insumos"
                         value={suppliesCost || ""}
-                        onChange={(e) => setSuppliesCost(Number(e.target.value))}
+                        onChange={(e) =>
+                          setSuppliesCost(Number(e.target.value))
+                        }
                         slotProps={{
                           input: {
                             startAdornment: (
-                              <InputAdornment position="start">R$</InputAdornment>
+                              <InputAdornment position="start">
+                                R$
+                              </InputAdornment>
                             ),
                           },
                         }}
@@ -454,11 +464,15 @@ export default function AdminCalculator() {
                         type="number"
                         label="Acabamento (min)"
                         value={laborMinutes || ""}
-                        onChange={(e) => setLaborMinutes(Number(e.target.value))}
+                        onChange={(e) =>
+                          setLaborMinutes(Number(e.target.value))
+                        }
                         slotProps={{
                           input: {
                             endAdornment: (
-                              <InputAdornment position="end">min</InputAdornment>
+                              <InputAdornment position="end">
+                                min
+                              </InputAdornment>
                             ),
                           },
                         }}
@@ -476,7 +490,9 @@ export default function AdminCalculator() {
                         slotProps={{
                           input: {
                             startAdornment: (
-                              <InputAdornment position="start">R$</InputAdornment>
+                              <InputAdornment position="start">
+                                R$
+                              </InputAdornment>
                             ),
                             endAdornment: (
                               <InputAdornment position="end">/h</InputAdornment>
@@ -505,11 +521,15 @@ export default function AdminCalculator() {
                         type="number"
                         label="Tempo de Pintura / Lixamento"
                         value={paintingMinutes || ""}
-                        onChange={(e) => setPaintingMinutes(Number(e.target.value))}
+                        onChange={(e) =>
+                          setPaintingMinutes(Number(e.target.value))
+                        }
                         slotProps={{
                           input: {
                             endAdornment: (
-                              <InputAdornment position="end">min</InputAdornment>
+                              <InputAdornment position="end">
+                                min
+                              </InputAdornment>
                             ),
                           },
                         }}
@@ -521,11 +541,15 @@ export default function AdminCalculator() {
                         type="number"
                         label="Insumos (Primer, Tintas, Verniz)"
                         value={paintingSuppliesCost || ""}
-                        onChange={(e) => setPaintingSuppliesCost(Number(e.target.value))}
+                        onChange={(e) =>
+                          setPaintingSuppliesCost(Number(e.target.value))
+                        }
                         slotProps={{
                           input: {
                             startAdornment: (
-                              <InputAdornment position="start">R$</InputAdornment>
+                              <InputAdornment position="start">
+                                R$
+                              </InputAdornment>
                             ),
                           },
                         }}
@@ -610,16 +634,33 @@ export default function AdminCalculator() {
 
                     <Divider sx={{ my: 1.5 }} />
 
-                    <Box display="flex" justifyContent="space-between" alignItems="center" bgcolor="grey.100" p={1.5} borderRadius={2}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      bgcolor="grey.100"
+                      p={1.5}
+                      borderRadius={2}
+                    >
                       <Box>
-                        <Typography variant="caption" fontWeight="800" color="secondary.main" display="block">
+                        <Typography
+                          variant="caption"
+                          fontWeight="800"
+                          color="secondary.main"
+                          display="block"
+                        >
                           🎨 Com Pintura Manual Artística:
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Adicional: +R$ {calculations.suggestedPaintingAddon.toFixed(2)}
+                          Adicional: +R${" "}
+                          {calculations.suggestedPaintingAddon.toFixed(2)}
                         </Typography>
                       </Box>
-                      <Typography variant="h5" fontWeight="900" color="secondary.main">
+                      <Typography
+                        variant="h5"
+                        fontWeight="900"
+                        color="secondary.main"
+                      >
                         R$ {calculations.suggestedPriceWithPainting.toFixed(2)}
                       </Typography>
                     </Box>

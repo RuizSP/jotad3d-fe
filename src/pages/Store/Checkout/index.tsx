@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as Yup from "yup";
 import {
   Box,
@@ -16,12 +16,20 @@ import {
   Chip,
   CircularProgress,
 } from "@mui/material";
-import { CheckCircle2, ShoppingBag, ArrowLeft, ArrowRight, MessageSquareShare, Search } from "lucide-react";
+import {
+  CheckCircle2,
+  ShoppingBag,
+  ArrowLeft,
+  ArrowRight,
+  MessageSquareShare,
+  Search,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../../providers/CartContext";
 import { Page } from "../../../components/ui/Page";
 import { useForm } from "../../../hooks/useForm";
 import { ordersService } from "../../../services/orders.service";
+import { useCreateOrder } from "../../../hooks/useOrders";
 import { cepService } from "../../../services/cep.service";
 import type { Order } from "../../../shared/interfaces/Order";
 import ColorSwatch from "../../../components/common/ColorSwatch";
@@ -40,8 +48,12 @@ interface CheckoutFormData {
 }
 
 const checkoutValidationSchema = Yup.object().shape({
-  customerName: Yup.string().required("Informe seu nome completo").min(3, "Mínimo 3 caracteres"),
-  whatsapp: Yup.string().required("Informe seu WhatsApp").min(8, "Telefone inválido"),
+  customerName: Yup.string()
+    .required("Informe seu nome completo")
+    .min(3, "Mínimo 3 caracteres"),
+  whatsapp: Yup.string()
+    .required("Informe seu WhatsApp")
+    .min(8, "Telefone inválido"),
   email: Yup.string().email("E-mail inválido"),
   cep: Yup.string().required("Informe o CEP").min(8, "CEP inválido"),
   rua: Yup.string().required("Informe a rua/endereço"),
@@ -55,7 +67,9 @@ const checkoutValidationSchema = Yup.object().shape({
 export default function Checkout() {
   const [activeStep, setActiveStep] = useState(0);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createOrder = useCreateOrder();
+  const isSubmitting = createOrder.isPending;
+  const submissionInProgress = useRef(false);
   const [isSearchingCep, setIsSearchingCep] = useState(false);
   const { items, totalPrice, totalItems, clearCart } = useCart();
   const navigate = useNavigate();
@@ -80,49 +94,58 @@ export default function Checkout() {
     }
   };
 
-  const {
-    data,
-    changeValue,
-    validation,
-    validationErrors,
-  } = useForm<CheckoutFormData>({
-    initialValues: {
-      customerName: "",
-      whatsapp: "",
-      email: "",
-      cep: "",
-      rua: "",
-      numero: "",
-      bairro: "",
-      cidade: "",
-      complemento: "",
-      notes: "",
-    },
-    schema: checkoutValidationSchema,
-  });
+  const { data, changeValue, validation, validationErrors } =
+    useForm<CheckoutFormData>({
+      initialValues: {
+        customerName: "",
+        whatsapp: "",
+        email: "",
+        cep: "",
+        rua: "",
+        numero: "",
+        bairro: "",
+        cidade: "",
+        complemento: "",
+        notes: "",
+      },
+      schema: checkoutValidationSchema,
+    });
 
   const steps = ["Identificação", "Endereço de Entrega", "Confirmar Pedido"];
 
   const handleNext = async () => {
     if (activeStep === 0) {
-      if (!data.customerName || data.customerName.length < 3 || !data.whatsapp || data.whatsapp.length < 8) {
+      if (
+        !data.customerName ||
+        data.customerName.length < 3 ||
+        !data.whatsapp ||
+        data.whatsapp.length < 8
+      ) {
         await validation();
         return;
       }
       setActiveStep(1);
     } else if (activeStep === 1) {
-      if (!data.cep || !data.rua || !data.numero || !data.bairro || !data.cidade) {
+      if (
+        !data.cep ||
+        !data.rua ||
+        !data.numero ||
+        !data.bairro ||
+        !data.cidade
+      ) {
         await validation();
         return;
       }
       setActiveStep(2);
     } else if (activeStep === 2) {
-      const isValid = await validation();
-      if (!isValid) return;
+      if (submissionInProgress.current) return;
+      submissionInProgress.current = true;
 
-      setIsSubmitting(true);
       try {
-        const order = await ordersService.create({
+        const isValid = await validation();
+        if (!isValid) return;
+
+        const order = await createOrder.mutateAsync({
           customerName: data.customerName,
           whatsapp: data.whatsapp,
           email: data.email || undefined,
@@ -149,8 +172,10 @@ export default function Checkout() {
         setCreatedOrder(order);
         clearCart();
         setActiveStep(3);
+      } catch {
+        return;
       } finally {
-        setIsSubmitting(false);
+        submissionInProgress.current = false;
       }
     }
   };
@@ -179,7 +204,11 @@ export default function Checkout() {
             <Typography variant="h5" fontWeight="800">
               Seu carrinho está vazio
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, mb: 3 }}
+            >
               Selecione peças em nosso catálogo para prosseguir com o pedido.
             </Typography>
             <Button
@@ -231,8 +260,15 @@ export default function Checkout() {
                   Pedido Registrado com Sucesso!
                 </Typography>
 
-                <Typography variant="body1" color="text.secondary" paragraph maxWidth={500} mx="auto">
-                  Olá, <strong>{createdOrder.customerName}</strong>! Seu pedido foi gravado em nossa fila de produção.
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  paragraph
+                  maxWidth={500}
+                  mx="auto"
+                >
+                  Olá, <strong>{createdOrder.customerName}</strong>! Seu pedido
+                  foi gravado em nossa fila de produção.
                 </Typography>
 
                 <Paper
@@ -247,7 +283,12 @@ export default function Checkout() {
                     border: "2px dashed #D4AF37",
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight="700">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    textTransform="uppercase"
+                    fontWeight="700"
+                  >
                     Seu Código de Acompanhamento
                   </Typography>
                   <Typography
@@ -263,8 +304,15 @@ export default function Checkout() {
                   </Typography>
                 </Paper>
 
-                <Typography variant="body2" color="text.secondary" maxWidth={500} mx="auto" mb={4}>
-                  Guarde este código para acompanhar o status da produção a qualquer momento pelo site.
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  maxWidth={500}
+                  mx="auto"
+                  mb={4}
+                >
+                  Guarde este código para acompanhar o status da produção a
+                  qualquer momento pelo site.
                 </Typography>
 
                 <Stack
@@ -276,7 +324,10 @@ export default function Checkout() {
                     variant="contained"
                     size="large"
                     startIcon={<MessageSquareShare size={20} />}
-                    href={ordersService.buildWhatsAppMessage(createdOrder, companyPhone)}
+                    href={ordersService.buildWhatsAppMessage(
+                      createdOrder,
+                      companyPhone,
+                    )}
                     target="_blank"
                     rel="noopener noreferrer"
                     sx={{
@@ -296,7 +347,9 @@ export default function Checkout() {
                     variant="outlined"
                     size="large"
                     startIcon={<Search size={18} />}
-                    onClick={() => navigate(`/tracking?code=${createdOrder.accessCode}`)}
+                    onClick={() =>
+                      navigate(`/tracking?code=${createdOrder.accessCode}`)
+                    }
                     sx={{ borderRadius: "40px", px: 3 }}
                   >
                     Acompanhar Pedido
@@ -320,7 +373,9 @@ export default function Checkout() {
                       <TextField
                         label="Nome Completo *"
                         value={data.customerName}
-                        onChange={(e) => changeValue("customerName", e.target.value)}
+                        onChange={(e) =>
+                          changeValue("customerName", e.target.value)
+                        }
                         {...validationErrors("customerName")}
                       />
 
@@ -328,7 +383,9 @@ export default function Checkout() {
                         label="WhatsApp com DDD *"
                         placeholder="(11) 99999-9999"
                         value={data.whatsapp}
-                        onChange={(e) => changeValue("whatsapp", e.target.value)}
+                        onChange={(e) =>
+                          changeValue("whatsapp", e.target.value)
+                        }
                         {...validationErrors("whatsapp")}
                       />
 
@@ -342,7 +399,8 @@ export default function Checkout() {
                       />
 
                       <Alert severity="info" sx={{ borderRadius: 2 }}>
-                        Usaremos seu WhatsApp para combinar detalhes do pagamento e avisar quando a peça estiver pronta.
+                        Usaremos seu WhatsApp para combinar detalhes do
+                        pagamento e avisar quando a peça estiver pronta.
                       </Alert>
                     </Stack>
                   )}
@@ -384,7 +442,9 @@ export default function Checkout() {
                           <TextField
                             label="Número *"
                             value={data.numero}
-                            onChange={(e) => changeValue("numero", e.target.value)}
+                            onChange={(e) =>
+                              changeValue("numero", e.target.value)
+                            }
                             {...validationErrors("numero")}
                           />
                         </Grid>
@@ -407,7 +467,9 @@ export default function Checkout() {
                       <TextField
                         label="Complemento (Apto, bloco, referência)"
                         value={data.complemento}
-                        onChange={(e) => changeValue("complemento", e.target.value)}
+                        onChange={(e) =>
+                          changeValue("complemento", e.target.value)
+                        }
                       />
                     </Stack>
                   )}
@@ -425,9 +487,18 @@ export default function Checkout() {
 
                       <Paper
                         variant="outlined"
-                        sx={{ p: 2, borderRadius: 2, bgcolor: "background.default" }}
+                        sx={{
+                          p: 2,
+                          borderRadius: 2,
+                          bgcolor: "background.default",
+                        }}
                       >
-                        <Typography variant="caption" fontWeight="bold" textTransform="uppercase" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          fontWeight="bold"
+                          textTransform="uppercase"
+                          color="text.secondary"
+                        >
                           Contato
                         </Typography>
                         <Typography variant="body2" fontWeight="700">
@@ -439,11 +510,17 @@ export default function Checkout() {
 
                         <Divider sx={{ my: 1.5 }} />
 
-                        <Typography variant="caption" fontWeight="bold" textTransform="uppercase" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          fontWeight="bold"
+                          textTransform="uppercase"
+                          color="text.secondary"
+                        >
                           Endereço de Entrega
                         </Typography>
                         <Typography variant="body2">
-                          {data.rua}, {data.numero}{data.complemento ? ` (${data.complemento})` : ""}
+                          {data.rua}, {data.numero}
+                          {data.complemento ? ` (${data.complemento})` : ""}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {data.bairro} - {data.cidade} • CEP: {data.cep}
@@ -460,7 +537,8 @@ export default function Checkout() {
                       />
 
                       <Alert severity="success" sx={{ borderRadius: 2 }}>
-                        Ao confirmar, seu pedido será registrado e você receberá um código para acompanhar a produção.
+                        Ao confirmar, seu pedido será registrado e você receberá
+                        um código para acompanhar a produção.
                       </Alert>
                     </Stack>
                   )}
@@ -512,7 +590,11 @@ export default function Checkout() {
                       top: 100,
                     }}
                   >
-                    <Typography variant="subtitle1" fontWeight="800" gutterBottom>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight="800"
+                      gutterBottom
+                    >
                       Resumo da Encomenda
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -537,13 +619,21 @@ export default function Checkout() {
                             }}
                           />
                           <Box flexGrow={1}>
-                            <Typography variant="body2" fontWeight="700" noWrap sx={{ maxWidth: 170 }}>
+                            <Typography
+                              variant="body2"
+                              fontWeight="700"
+                              noWrap
+                              sx={{ maxWidth: 170 }}
+                            >
                               {item.name}
                             </Typography>
                             {item.color && (
                               <Box display="flex" alignItems="center" gap={0.8}>
                                 <ColorSwatch colorName={item.color} size={10} />
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
                                   {item.color} • {item.quantity} un
                                 </Typography>
                               </Box>
@@ -575,17 +665,29 @@ export default function Checkout() {
                         label="Sob demanda"
                         size="small"
                         color="secondary"
-                        sx={{ fontSize: "0.65rem", height: 20, fontWeight: 700 }}
+                        sx={{
+                          fontSize: "0.65rem",
+                          height: 20,
+                          fontWeight: 700,
+                        }}
                       />
                     </Box>
 
                     <Divider sx={{ mb: 2 }} />
 
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="h6" fontWeight="800">
                         Total:
                       </Typography>
-                      <Typography variant="h5" fontWeight="900" color="secondary.main">
+                      <Typography
+                        variant="h5"
+                        fontWeight="900"
+                        color="secondary.main"
+                      >
                         R$ {totalPrice.toFixed(2)}
                       </Typography>
                     </Box>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Box, Grid, Typography, Card, CardContent } from "@mui/material";
 import { DollarSign, Layers, Clock, CheckCircle2, Home } from "lucide-react";
 import {
@@ -14,8 +14,7 @@ import {
 } from "recharts";
 import { Page } from "../../components/ui/Page";
 import { Elevation } from "../../components/ui/Elevation";
-import { ordersService } from "../../services/orders.service";
-import type { Order } from "../../shared/interfaces/Order";
+import { useOrders } from "../../hooks/useOrders";
 import OrdersTable from "../../components/application/Orders/OrdersTable";
 import { Filter } from "../../components/ui/Filter";
 
@@ -31,11 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const [orders, setOrders] = useState<Order[]>([]);
-
-  useEffect(() => {
-    ordersService.getAll().then((data) => setOrders(data));
-  }, []);
+  const { data: orders = [] } = useOrders();
 
   const stats = useMemo(() => {
     const totalRevenue = orders
@@ -43,16 +38,19 @@ export default function Dashboard() {
       .reduce((acc, o) => acc + o.totalAmount, 0);
 
     const inProduction = orders.filter(
-      (o) => o.status === "producao" || o.status === "acabamento" || o.status === "impressao_concluida"
+      (o) =>
+        o.status === "producao" ||
+        o.status === "acabamento" ||
+        o.status === "impressao_concluida",
     ).length;
 
     const completed = orders.filter(
-      (o) => o.status === "pronto" || o.status === "finalizado"
+      (o) => o.status === "pronto" || o.status === "finalizado",
     ).length;
 
     const totalPrintedUnits = orders.reduce(
       (acc, o) => acc + o.items.reduce((sum, it) => sum + it.quantity, 0),
-      0
+      0,
     );
 
     const statusCounts: Record<string, number> = {};
@@ -101,7 +99,11 @@ export default function Dashboard() {
             <Elevation.Container icon={DollarSign}>
               <Elevation.Title title={"Faturamento Recebido"} />
               <Elevation.Content>
-                <Typography fontSize={24} fontWeight="900" color="secondary.main">
+                <Typography
+                  fontSize={24}
+                  fontWeight="900"
+                  color="secondary.main"
+                >
                   R$ {stats.totalRevenue.toFixed(2)}
                 </Typography>
               </Elevation.Content>
@@ -113,7 +115,8 @@ export default function Dashboard() {
               <Elevation.Title title={"Em Produção"} />
               <Elevation.Content>
                 <Typography fontSize={24} fontWeight="900">
-                  {stats.inProduction} {stats.inProduction === 1 ? "pedido" : "pedidos"}
+                  {stats.inProduction}{" "}
+                  {stats.inProduction === 1 ? "pedido" : "pedidos"}
                 </Typography>
               </Elevation.Content>
             </Elevation.Container>
@@ -124,7 +127,8 @@ export default function Dashboard() {
               <Elevation.Title title={"Prontos / Concluídos"} />
               <Elevation.Content>
                 <Typography fontSize={24} fontWeight="900" color="success.main">
-                  {stats.completed} {stats.completed === 1 ? "pedido" : "pedidos"}
+                  {stats.completed}{" "}
+                  {stats.completed === 1 ? "pedido" : "pedidos"}
                 </Typography>
               </Elevation.Content>
             </Elevation.Container>
@@ -144,7 +148,14 @@ export default function Dashboard() {
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, md: 7 }}>
-            <Card sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", p: 2 }}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                p: 2,
+              }}
+            >
               <CardContent>
                 <Typography variant="subtitle1" fontWeight="800" gutterBottom>
                   Distribuição de Fila por Status
@@ -168,12 +179,24 @@ export default function Dashboard() {
           </Grid>
 
           <Grid size={{ xs: 12, md: 5 }}>
-            <Card sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", p: 2 }}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                p: 2,
+              }}
+            >
               <CardContent>
                 <Typography variant="subtitle1" fontWeight="800" gutterBottom>
                   Proporção de Pedidos
                 </Typography>
-                <Box height={260} display="flex" alignItems="center" justifyContent="center">
+                <Box
+                  height={260}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie

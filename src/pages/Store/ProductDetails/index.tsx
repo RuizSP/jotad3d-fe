@@ -20,11 +20,11 @@ import {
   Minus,
   Paintbrush,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Page } from "../../../components/ui/Page";
 import { useCart } from "../../../providers/CartContext";
-import { productsService } from "../../../services/products.service";
+import { useProduct } from "../../../hooks/useProducts";
 import type { Product } from "../../../shared/interfaces/Product";
 import ColorSwatch from "../../../components/common/ColorSwatch";
 import CustomQuoteDialog from "../../../components/dialogs/CustomQuoteDialog";
@@ -40,55 +40,50 @@ const MATERIAL_OPTIONS = [
   { label: "PETG Reforçado (+R$ 15)", addPrice: 15 },
 ];
 
+interface ProductCustomization {
+  productId: string | null;
+  selectedColor: string;
+  selectedScaleIndex: number;
+  selectedMaterialIndex: number;
+  selectedFinishIndex: number;
+  paintInstructions: string;
+  quantity: number;
+}
+
+const createInitialCustomization = (
+  product?: Product,
+): ProductCustomization => ({
+  productId: product?.id ?? null,
+  selectedColor: product?.availableColors?.[0] ?? "Preto",
+  selectedScaleIndex: 0,
+  selectedMaterialIndex: 0,
+  selectedFinishIndex: 0,
+  paintInstructions: "",
+  quantity: 1,
+});
+
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string>("Preto");
-  const [selectedScaleIndex, setSelectedScaleIndex] = useState<number>(0);
-  const [selectedMaterialIndex, setSelectedMaterialIndex] = useState<number>(0);
-  const [selectedFinishIndex, setSelectedFinishIndex] = useState<number>(0);
-  const [paintInstructions, setPaintInstructions] = useState<string>("");
-  const [quantity, setQuantity] = useState<number>(1);
+  const { data: product, isPending: loading, error } = useProduct(id);
+  const [customization, setCustomization] = useState<ProductCustomization>(() =>
+    createInitialCustomization(),
+  );
   const [quoteOpen, setQuoteOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    if (id) {
-      productsService
-        .getById(id)
-        .then((p) => {
-          if (active && p) {
-            setProduct(p);
-            if (p.availableColors && p.availableColors.length > 0) {
-              setSelectedColor(p.availableColors[0]);
-            }
-            setSelectedScaleIndex(0);
-            setSelectedMaterialIndex(0);
-            setSelectedFinishIndex(0);
-            setPaintInstructions("");
-          }
-        })
-        .catch((error: unknown) => {
-          if (active) {
-            console.error("Falha ao carregar detalhes do produto.", error);
-          }
-        });
-    }
-
-    return () => {
-      active = false;
-    };
-  }, [id]);
 
   if (!product) {
     return (
       <Page.Root>
         <Page.Content>
           <Box py={8} textAlign="center">
-            <Typography variant="h6">Carregando detalhes da peça...</Typography>
+            <Typography variant="h6">
+              {error
+                ? "Não foi possível carregar esta peça."
+                : loading
+                  ? "Carregando detalhes da peça..."
+                  : "Peça não encontrada."}
+            </Typography>
             <Button
               sx={{ mt: 2, borderRadius: "40px" }}
               variant="outlined"
@@ -101,6 +96,31 @@ export default function ProductDetails() {
       </Page.Root>
     );
   }
+
+  const activeCustomization =
+    customization.productId === product.id
+      ? customization
+      : createInitialCustomization(product);
+  const {
+    selectedColor,
+    selectedScaleIndex,
+    selectedMaterialIndex,
+    selectedFinishIndex,
+    paintInstructions,
+    quantity,
+  } = activeCustomization;
+
+  const updateCustomization = (
+    updates: Partial<Omit<ProductCustomization, "productId">>,
+  ) => {
+    setCustomization((current) => ({
+      ...(current.productId === product.id
+        ? current
+        : createInitialCustomization(product)),
+      ...updates,
+      productId: product.id,
+    }));
+  };
 
   const paintingAddPrice = product?.paintingPrice ?? 35;
 
@@ -257,7 +277,9 @@ export default function ProductDetails() {
                       key={scale.label}
                       label={scale.label}
                       clickable
-                      onClick={() => setSelectedScaleIndex(idx)}
+                      onClick={() =>
+                        updateCustomization({ selectedScaleIndex: idx })
+                      }
                       variant={
                         selectedScaleIndex === idx ? "filled" : "outlined"
                       }
@@ -285,7 +307,9 @@ export default function ProductDetails() {
                       key={mat.label}
                       label={mat.label}
                       clickable
-                      onClick={() => setSelectedMaterialIndex(idx)}
+                      onClick={() =>
+                        updateCustomization({ selectedMaterialIndex: idx })
+                      }
                       variant={
                         selectedMaterialIndex === idx ? "filled" : "outlined"
                       }
@@ -320,7 +344,9 @@ export default function ProductDetails() {
                       }
                       label={fin.label}
                       clickable
-                      onClick={() => setSelectedFinishIndex(idx)}
+                      onClick={() =>
+                        updateCustomization({ selectedFinishIndex: idx })
+                      }
                       variant={
                         selectedFinishIndex === idx ? "filled" : "outlined"
                       }
@@ -368,7 +394,9 @@ export default function ProductDetails() {
                         colorName={c}
                         selected={selectedColor === c}
                         size={32}
-                        onClick={() => setSelectedColor(c)}
+                        onClick={() =>
+                          updateCustomization({ selectedColor: c })
+                        }
                       />
                     ))}
                   </Stack>
@@ -397,7 +425,9 @@ export default function ProductDetails() {
                     size="small"
                     placeholder="Instruções ou referências de cores (opcional)..."
                     value={paintInstructions}
-                    onChange={(e) => setPaintInstructions(e.target.value)}
+                    onChange={(e) =>
+                      updateCustomization({ paintInstructions: e.target.value })
+                    }
                     fullWidth
                     sx={{ mt: 1.5, bgcolor: "background.paper" }}
                   />
@@ -495,7 +525,11 @@ export default function ProductDetails() {
                   <IconButton
                     size="small"
                     disabled={quantity <= 1}
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    onClick={() =>
+                      updateCustomization({
+                        quantity: Math.max(1, quantity - 1),
+                      })
+                    }
                   >
                     <Minus size={16} />
                   </IconButton>
@@ -504,7 +538,9 @@ export default function ProductDetails() {
                   </Typography>
                   <IconButton
                     size="small"
-                    onClick={() => setQuantity((q) => q + 1)}
+                    onClick={() =>
+                      updateCustomization({ quantity: quantity + 1 })
+                    }
                   >
                     <Plus size={16} />
                   </IconButton>

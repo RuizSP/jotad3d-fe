@@ -10,11 +10,27 @@ import {
 import Router from "./router";
 import ErrorBoundary from "./components/ui/ErrorBoundry";
 import Error from "./components/ui/Error";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ToastContainer } from "react-toastify";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      console.error("Falha ao buscar dados.", error);
+      const message = query.meta?.errorMessage;
+      toast.error(
+        typeof message === "string"
+          ? message
+          : "Não foi possível carregar os dados.",
+      );
+    },
+  }),
+});
 
 function AppContent() {
   const { theme } = useThemeToggle();

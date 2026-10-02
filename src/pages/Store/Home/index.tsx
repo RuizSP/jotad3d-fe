@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -16,27 +16,19 @@ import { Page } from "../../../components/ui/Page";
 import ProductCard from "../../../components/ui/ProductCard";
 import ProductQuickViewDialog from "../../../components/dialogs/ProductQuickViewDialog";
 import CustomQuoteDialog from "../../../components/dialogs/CustomQuoteDialog";
-import { productsService } from "../../../services/products.service";
+import { useProducts } from "../../../hooks/useProducts";
 import type { Product } from "../../../shared/interfaces/Product";
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCategory = searchParams.get("cat") || "Todos";
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isPending: loading } = useProducts();
   const selectedCategory = urlCategory;
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
   );
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
-
-  useEffect(() => {
-    productsService
-      .getAll()
-      .then((data) => setProducts(data))
-      .finally(() => setLoading(false));
-  }, []);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
