@@ -1,4 +1,4 @@
-import { Box } from "lucide-react";
+import { Box as BoxIcon, Menu as MenuIcon, X } from "lucide-react";
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
@@ -7,7 +7,14 @@ import { Sidebar } from "../../Sidebar";
 import { AppContent } from "../AppContent";
 import { AppShell } from "../AppShell";
 
-import { Stack } from "@mui/material";
+import {
+  Box,
+  Drawer,
+  IconButton,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { menu } from "../../../../router";
 import type { MenuItem } from "../../../../shared/interfaces/MenuItem";
 import type { UserInfo } from "../../../../shared/interfaces/UserInfo";
@@ -17,10 +24,14 @@ import { AppToolbar } from "../AppToolbar";
 export default function Applayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [activeId, setActiveId] = useState("dashboard");
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const navigate = useNavigate();
   const handleSelect = (item: MenuItem) => {
     setActiveId(item.id);
+    setMobileNavigationOpen(false);
     if (item.path) navigate(item.path);
   };
 
@@ -35,37 +46,85 @@ export default function Applayout() {
     <AppShell
       header={
         <Header.Root>
-          <Stack spacing={2} direction="row" alignItems="center">
-            <Header.Brand companyName="JOTAD 3D" icon={Box} />
+          <Stack spacing={1} direction="row" alignItems="center" minWidth={0}>
+            {isMobile && (
+              <IconButton
+                aria-label="Abrir navegação"
+                edge="start"
+                onClick={() => setMobileNavigationOpen(true)}
+              >
+                <MenuIcon size={20} />
+              </IconButton>
+            )}
+            <Header.Brand companyName="JOTAD 3D" icon={BoxIcon} />
           </Stack>
 
-          <Header.Search />
+          <Box sx={{ display: { xs: "none", md: "block" }, flex: 1 }}>
+            <Header.Search />
+          </Box>
           <Header.UserMenu user={user}>
             <ThemeSwitch />
           </Header.UserMenu>
         </Header.Root>
       }
       sidebar={
-        <Sidebar.Root
-          collapsed={collapsed}
-          onToggle={() => setCollapsed(!collapsed)}
-        >
-          <Sidebar.Toggle
-            collapsed={collapsed}
-            onToggle={() => setCollapsed(!collapsed)}
-          />
-          <Sidebar.Nav
-            collapsed={collapsed}
-            items={menu}
-            activeId={activeId}
-            onSelect={handleSelect}
-          />
-          {!collapsed && (
-            <Sidebar.Footer>
-              <Sidebar.Version />
-            </Sidebar.Footer>
-          )}
-        </Sidebar.Root>
+        <>
+          <Box sx={{ display: { xs: "none", md: "block" } }}>
+            <Sidebar.Root
+              collapsed={collapsed}
+              onToggle={() => setCollapsed(!collapsed)}
+            >
+              <Sidebar.Toggle
+                collapsed={collapsed}
+                onToggle={() => setCollapsed(!collapsed)}
+              />
+              <Sidebar.Nav
+                collapsed={collapsed}
+                items={menu}
+                activeId={activeId}
+                onSelect={handleSelect}
+              />
+              {!collapsed && (
+                <Sidebar.Footer>
+                  <Sidebar.Version />
+                </Sidebar.Footer>
+              )}
+            </Sidebar.Root>
+          </Box>
+          <Drawer
+            open={mobileNavigationOpen}
+            onClose={() => setMobileNavigationOpen(false)}
+            sx={{ display: { xs: "block", md: "none" } }}
+            PaperProps={{
+              sx: {
+                width: "min(84vw, 300px)",
+                p: 2,
+                pt: "max(16px, env(safe-area-inset-top))",
+              },
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              mb={3}
+            >
+              <Header.Brand companyName="JOTAD 3D" icon={BoxIcon} />
+              <IconButton
+                aria-label="Fechar navegação"
+                onClick={() => setMobileNavigationOpen(false)}
+              >
+                <X size={20} />
+              </IconButton>
+            </Stack>
+            <Sidebar.Nav
+              collapsed={false}
+              items={menu}
+              activeId={activeId}
+              onSelect={handleSelect}
+            />
+          </Drawer>
+        </>
       }
       toolbar={
         <AppToolbar.Root trigger={<AppToolbar.Trigger />}>

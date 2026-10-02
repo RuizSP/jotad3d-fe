@@ -1,8 +1,4 @@
-import {
-  Pagination,
-  Stack,
-  TablePagination
-} from "@mui/material";
+import { Pagination, Stack, TablePagination } from "@mui/material";
 
 interface DataTablePaginationProps {
   count: number;
@@ -25,10 +21,11 @@ export default function DataTablePagination({
 
   return (
     <Stack
-      direction="row"
+      direction={{ xs: "column", sm: "row" }}
       alignItems="center"
       justifyContent="space-between"
       width="100%"
+      minWidth={0}
       spacing={2}
     >
       <TablePagination
@@ -39,12 +36,23 @@ export default function DataTablePagination({
         rowsPerPage={perPage}
         onRowsPerPageChange={onRowsPerPageChange}
         rowsPerPageOptions={rowsPerPageOptions}
+        sx={{
+          width: { xs: "100%", sm: "auto" },
+          minWidth: 0,
+          "& .MuiTablePagination-toolbar": {
+            px: { xs: 0, sm: 2 },
+            flexWrap: "wrap",
+            justifyContent: { xs: "center", sm: "flex-end" },
+          },
+          "& .MuiTablePagination-selectLabel": {
+            display: { xs: "none", sm: "block" },
+          },
+        }}
         labelRowsPerPage="Linhas por página"
         labelDisplayedRows={({ from, to, count }) =>
           `Exibindo ${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
         }
       />
-      
 
       <Pagination
         count={pageCount}
@@ -54,6 +62,7 @@ export default function DataTablePagination({
         color="primary"
         showFirstButton
         showLastButton
+        sx={{ display: { xs: "none", sm: "block" } }}
       />
     </Stack>
   );

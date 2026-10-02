@@ -9,7 +9,7 @@ export default function PageRoot(props: PageRootProps) {
   const { children } = props;
 
   return (
-    <Stack spacing={2} width={"100%"}>
+    <Stack spacing={{ xs: 1.5, sm: 2 }} width="100%" minWidth={0}>
       {children}
     </Stack>
   );

@@ -99,13 +99,13 @@ export default function ProductQuickViewDialog({
       </Dialog.Header>
 
       <Dialog.Content>
-        <Grid container spacing={3} alignItems="center">
+        <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
           <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 width: "100%",
-                height: 340,
-                borderRadius: 3,
+                height: { xs: 210, sm: 340 },
+                borderRadius: { xs: 2, sm: 3 },
                 overflow: "hidden",
                 bgcolor: "background.default",
                 border: "1px solid",
@@ -127,7 +127,7 @@ export default function ProductQuickViewDialog({
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={2}>
-              <Box display="flex" alignItems="center" gap={1}>
+              <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                 <Chip
                   label={product.category}
                   size="small"
@@ -180,7 +180,7 @@ export default function ProductQuickViewDialog({
                 >
                   Escala / Tamanho da Peça:
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {SCALE_OPTIONS.map((scale, idx) => (
                     <Chip
                       key={scale.label}
@@ -194,6 +194,9 @@ export default function ProductQuickViewDialog({
                       size="small"
                       sx={{
                         fontWeight: selectedScaleIndex === idx ? 800 : 500,
+                        maxWidth: "100%",
+                        height: "auto",
+                        "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
                       }}
                     />
                   ))}
@@ -208,7 +211,7 @@ export default function ProductQuickViewDialog({
                 >
                   Material / Filamento:
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {MATERIAL_OPTIONS.map((mat, idx) => (
                     <Chip
                       key={mat.label}
@@ -224,6 +227,9 @@ export default function ProductQuickViewDialog({
                       size="small"
                       sx={{
                         fontWeight: selectedMaterialIndex === idx ? 800 : 500,
+                        maxWidth: "100%",
+                        height: "auto",
+                        "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
                       }}
                     />
                   ))}
@@ -238,7 +244,7 @@ export default function ProductQuickViewDialog({
                 >
                   Acabamento da Peça:
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {FINISH_OPTIONS.map((fin, idx) => (
                     <Chip
                       key={fin.id}
@@ -259,6 +265,9 @@ export default function ProductQuickViewDialog({
                       size="small"
                       sx={{
                         fontWeight: selectedFinishIndex === idx ? 800 : 500,
+                        maxWidth: "100%",
+                        height: "auto",
+                        "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
                       }}
                     />
                   ))}

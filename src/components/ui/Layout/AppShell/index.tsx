@@ -16,12 +16,36 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <Box
-      sx={{ height: "100vh", display: "flex", flexDirection: "column", p: 1 }}
+      sx={{
+        height: "100dvh",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        p: { xs: 0.75, sm: 1 },
+        overflow: "hidden",
+      }}
     >
       {header}
-      <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
         {sidebar}
-        <Box sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flex: 1,
+            minHeight: 0,
+            minWidth: 0,
+            flexDirection: "column",
+            gap: 1,
+          }}
+        >
           {children}
         </Box>
       </Box>

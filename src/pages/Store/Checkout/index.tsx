@@ -230,7 +230,20 @@ export default function Checkout() {
       <Page.Content>
         <Box sx={{ maxWidth: "md", mx: "auto", width: "100%", pb: 8 }}>
           {activeStep < 3 && (
-            <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 5 }}>
+            <Stepper
+              activeStep={activeStep}
+              alternativeLabel
+              sx={{
+                mb: { xs: 3, sm: 5 },
+                px: { xs: 0, sm: 1 },
+                "& .MuiStepLabel-label": {
+                  fontSize: { xs: "0.65rem", sm: "0.875rem" },
+                  lineHeight: 1.2,
+                  overflowWrap: "anywhere",
+                },
+                "& .MuiStep-root": { px: { xs: 0.25, sm: 1 } },
+              }}
+            >
               {steps.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
@@ -256,7 +269,15 @@ export default function Checkout() {
                   style={{ margin: "0 auto", marginBottom: 20 }}
                 />
 
-                <Typography variant="h4" fontWeight="900" gutterBottom>
+                <Typography
+                  variant="h4"
+                  fontWeight="900"
+                  gutterBottom
+                  sx={{
+                    fontSize: { xs: "1.7rem", sm: "2.125rem" },
+                    lineHeight: 1.15,
+                  }}
+                >
                   Pedido Registrado com Sucesso!
                 </Typography>
 
@@ -295,7 +316,11 @@ export default function Checkout() {
                     variant="h3"
                     fontWeight="900"
                     color="secondary.main"
-                    sx={{ my: 1, letterSpacing: "0.08em" }}
+                    sx={{
+                      my: 1,
+                      fontSize: { xs: "1.8rem", sm: "3rem" },
+                      letterSpacing: "0.08em",
+                    }}
                   >
                     {createdOrder.accessCode}
                   </Typography>
@@ -337,6 +362,7 @@ export default function Checkout() {
                       px: 3.5,
                       py: 1.4,
                       fontWeight: 800,
+                      width: { xs: "100%", sm: "auto" },
                       "&:hover": { bgcolor: "#1EBE5D" },
                     }}
                   >
@@ -350,7 +376,11 @@ export default function Checkout() {
                     onClick={() =>
                       navigate(`/tracking?code=${createdOrder.accessCode}`)
                     }
-                    sx={{ borderRadius: "40px", px: 3 }}
+                    sx={{
+                      borderRadius: "40px",
+                      px: 3,
+                      width: { xs: "100%", sm: "auto" },
+                    }}
                   >
                     Acompanhar Pedido
                   </Button>
@@ -546,6 +576,9 @@ export default function Checkout() {
                   <Box
                     sx={{
                       display: "flex",
+                      flexDirection: { xs: "column-reverse", sm: "row" },
+                      alignItems: { xs: "stretch", sm: "center" },
+                      gap: 1,
                       justifyContent: "space-between",
                       mt: 4,
                     }}
@@ -554,7 +587,10 @@ export default function Checkout() {
                       disabled={activeStep === 0 || isSubmitting}
                       onClick={handleBack}
                       startIcon={<ArrowLeft size={16} />}
-                      sx={{ borderRadius: "30px" }}
+                      sx={{
+                        borderRadius: "30px",
+                        width: { xs: "100%", sm: "auto" },
+                      }}
                     >
                       Voltar
                     </Button>
@@ -568,6 +604,7 @@ export default function Checkout() {
                         borderRadius: "30px",
                         px: 3.5,
                         fontWeight: 700,
+                        width: { xs: "100%", sm: "auto" },
                       }}
                     >
                       {activeStep === steps.length - 1
@@ -586,7 +623,7 @@ export default function Checkout() {
                       p: 3,
                       borderRadius: 3,
                       bgcolor: "background.default",
-                      position: "sticky",
+                      position: { xs: "static", md: "sticky" },
                       top: 100,
                     }}
                   >

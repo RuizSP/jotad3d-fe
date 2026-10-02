@@ -182,13 +182,18 @@ export default function ProductDetails() {
         </Page.HeaderActions>
       </Page.Header>
       <Page.Content>
-        <Grid container spacing={{ xs: 4, md: 7 }} sx={{ mb: 6 }}>
+        <Grid
+          container
+          spacing={{ xs: 2.5, sm: 4, md: 7 }}
+          sx={{ mb: { xs: 3, sm: 6 } }}
+        >
           <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 width: "100%",
-                height: { xs: 320, sm: 460 },
-                borderRadius: 4,
+                aspectRatio: { xs: "1 / 1", sm: "4 / 3", md: "1 / 1" },
+                maxHeight: { xs: 360, sm: 460 },
+                borderRadius: { xs: 2, sm: 4 },
                 overflow: "hidden",
                 border: "1px solid",
                 borderColor: "divider",
@@ -211,7 +216,7 @@ export default function ProductDetails() {
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={2.5}>
-              <Box display="flex" alignItems="center" gap={1}>
+              <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                 <Chip
                   label={product.category}
                   size="small"
@@ -233,7 +238,11 @@ export default function ProductDetails() {
               <Typography
                 variant="h3"
                 fontWeight="900"
-                sx={{ letterSpacing: "-0.03em" }}
+                sx={{
+                  fontSize: { xs: "1.9rem", sm: "2.5rem", md: "3rem" },
+                  lineHeight: 1.1,
+                  overflowWrap: "anywhere",
+                }}
               >
                 {product.name}
               </Typography>
@@ -243,6 +252,7 @@ export default function ProductDetails() {
                   variant="h3"
                   fontWeight="900"
                   color="secondary.main"
+                  sx={{ fontSize: { xs: "1.8rem", sm: "2.5rem" } }}
                 >
                   R$ {unitPrice.toFixed(2)}
                 </Typography>
@@ -271,7 +281,7 @@ export default function ProductDetails() {
                 >
                   Escala / Tamanho da Peça:
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {SCALE_OPTIONS.map((scale, idx) => (
                     <Chip
                       key={scale.label}
@@ -287,6 +297,9 @@ export default function ProductDetails() {
                       size="small"
                       sx={{
                         fontWeight: selectedScaleIndex === idx ? 800 : 500,
+                        maxWidth: "100%",
+                        height: "auto",
+                        "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
                       }}
                     />
                   ))}
@@ -301,7 +314,7 @@ export default function ProductDetails() {
                 >
                   Material / Filamento:
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {MATERIAL_OPTIONS.map((mat, idx) => (
                     <Chip
                       key={mat.label}
@@ -319,6 +332,9 @@ export default function ProductDetails() {
                       size="small"
                       sx={{
                         fontWeight: selectedMaterialIndex === idx ? 800 : 500,
+                        maxWidth: "100%",
+                        height: "auto",
+                        "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
                       }}
                     />
                   ))}
@@ -333,7 +349,7 @@ export default function ProductDetails() {
                 >
                   Acabamento da Peça:
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {FINISH_OPTIONS.map((fin, idx) => (
                     <Chip
                       key={fin.id}
@@ -356,6 +372,9 @@ export default function ProductDetails() {
                       size="small"
                       sx={{
                         fontWeight: selectedFinishIndex === idx ? 800 : 500,
+                        maxWidth: "100%",
+                        height: "auto",
+                        "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
                       }}
                     />
                   ))}
@@ -385,7 +404,13 @@ export default function ProductDetails() {
                     </Typography>
                   </Box>
 
-                  <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    useFlexGap
+                    flexWrap="wrap"
+                  >
                     {(
                       product.availableColors || ["Preto", "Branco", "Dourado"]
                     ).map((c) => (
@@ -571,6 +596,7 @@ export default function ProductDetails() {
                     borderRadius: "40px",
                     py: 1.5,
                     px: 3,
+                    width: { xs: "100%", sm: "auto" },
                     borderColor: "secondary.main",
                     color: "secondary.main",
                     fontWeight: 700,

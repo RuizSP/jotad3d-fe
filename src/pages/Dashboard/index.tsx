@@ -1,5 +1,13 @@
 import { useMemo } from "react";
-import { Box, Grid, Typography, Card, CardContent } from "@mui/material";
+import {
+  Box,
+  Grid,
+  Typography,
+  Card,
+  CardContent,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { DollarSign, Layers, Clock, CheckCircle2, Home } from "lucide-react";
 import {
   Cell,
@@ -31,6 +39,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Dashboard() {
   const { data: orders = [] } = useOrders();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const stats = useMemo(() => {
     const totalRevenue = orders
@@ -87,12 +97,13 @@ export default function Dashboard() {
           sx={{
             display: "grid",
             gridTemplateColumns: {
-              xs: "1fr",
+              xs: "repeat(2, minmax(0, 1fr))",
               sm: "1fr 1fr",
               lg: "1fr 1fr 1fr 1fr",
             },
-            gap: 2.5,
+            gap: { xs: 1, sm: 2.5 },
             mb: 4,
+            minWidth: 0,
           }}
         >
           <Elevation.Root>
@@ -100,9 +111,10 @@ export default function Dashboard() {
               <Elevation.Title title={"Faturamento Recebido"} />
               <Elevation.Content>
                 <Typography
-                  fontSize={24}
+                  fontSize={{ xs: 17, sm: 24 }}
                   fontWeight="900"
                   color="secondary.main"
+                  sx={{ overflowWrap: "anywhere" }}
                 >
                   R$ {stats.totalRevenue.toFixed(2)}
                 </Typography>
@@ -114,7 +126,7 @@ export default function Dashboard() {
             <Elevation.Container icon={Clock}>
               <Elevation.Title title={"Em Produção"} />
               <Elevation.Content>
-                <Typography fontSize={24} fontWeight="900">
+                <Typography fontSize={{ xs: 17, sm: 24 }} fontWeight="900">
                   {stats.inProduction}{" "}
                   {stats.inProduction === 1 ? "pedido" : "pedidos"}
                 </Typography>
@@ -126,7 +138,11 @@ export default function Dashboard() {
             <Elevation.Container icon={CheckCircle2}>
               <Elevation.Title title={"Prontos / Concluídos"} />
               <Elevation.Content>
-                <Typography fontSize={24} fontWeight="900" color="success.main">
+                <Typography
+                  fontSize={{ xs: 17, sm: 24 }}
+                  fontWeight="900"
+                  color="success.main"
+                >
                   {stats.completed}{" "}
                   {stats.completed === 1 ? "pedido" : "pedidos"}
                 </Typography>
@@ -138,7 +154,7 @@ export default function Dashboard() {
             <Elevation.Container icon={Layers}>
               <Elevation.Title title={"Total de Peças"} />
               <Elevation.Content>
-                <Typography fontSize={24} fontWeight="900">
+                <Typography fontSize={{ xs: 17, sm: 24 }} fontWeight="900">
                   {stats.totalPrintedUnits} unidades
                 </Typography>
               </Elevation.Content>
@@ -146,25 +162,49 @@ export default function Dashboard() {
           </Elevation.Root>
         </Box>
 
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 3 }} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, md: 7 }}>
             <Card
               sx={{
-                borderRadius: 3,
+                minWidth: 0,
+                borderRadius: { xs: 2, sm: 3 },
                 border: "1px solid",
                 borderColor: "divider",
-                p: 2,
               }}
             >
-              <CardContent>
-                <Typography variant="subtitle1" fontWeight="800" gutterBottom>
+              <CardContent
+                sx={{
+                  p: { xs: 1.5, sm: 2.5 },
+                  "&:last-child": { pb: { xs: 1.5, sm: 2.5 } },
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight="800" gutterBottom>
                   Distribuição de Fila por Status
                 </Typography>
-                <Box height={260}>
+                <Box height={{ xs: 220, sm: 260 }} minWidth={0}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.chartData}>
-                      <XAxis dataKey="name" fontSize={12} />
-                      <YAxis allowDecimals={false} fontSize={12} />
+                    <BarChart
+                      data={stats.chartData}
+                      margin={{
+                        top: 8,
+                        right: 4,
+                        bottom: isMobile ? 16 : 4,
+                        left: -18,
+                      }}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        fontSize={isMobile ? 9 : 12}
+                        interval="preserveStartEnd"
+                        angle={isMobile ? -35 : 0}
+                        textAnchor={isMobile ? "end" : "middle"}
+                        height={isMobile ? 52 : 30}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        fontSize={isMobile ? 10 : 12}
+                        width={32}
+                      />
                       <Tooltip />
                       <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                         {stats.chartData.map((entry, index) => (
@@ -181,18 +221,24 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, md: 5 }}>
             <Card
               sx={{
-                borderRadius: 3,
+                minWidth: 0,
+                borderRadius: { xs: 2, sm: 3 },
                 border: "1px solid",
                 borderColor: "divider",
-                p: 2,
               }}
             >
-              <CardContent>
-                <Typography variant="subtitle1" fontWeight="800" gutterBottom>
+              <CardContent
+                sx={{
+                  p: { xs: 1.5, sm: 2.5 },
+                  "&:last-child": { pb: { xs: 1.5, sm: 2.5 } },
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight="800" gutterBottom>
                   Proporção de Pedidos
                 </Typography>
                 <Box
-                  height={260}
+                  height={{ xs: 220, sm: 260 }}
+                  minWidth={0}
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
@@ -205,8 +251,8 @@ export default function Dashboard() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={80}
-                        label
+                        outerRadius={isMobile ? 66 : 80}
+                        label={!isMobile}
                       >
                         {stats.chartData.map((entry, index) => (
                           <Cell key={`cell-pie-${index}`} fill={entry.fill} />
@@ -221,7 +267,7 @@ export default function Dashboard() {
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: { xs: 2.5, sm: 4 }, minWidth: 0 }}>
           <Filter.Provider initialFormValues={{}}>
             <OrdersTable />
           </Filter.Provider>

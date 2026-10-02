@@ -1,8 +1,17 @@
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Tooltip,
+  Typography,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { MessageSquareShare } from "lucide-react";
 import { DataTable } from "../../ui/DataTable";
+import { RecordCard } from "../../ui/RecordCard";
 import { Filter } from "../../ui/Filter";
 import { usePagination } from "../../../hooks/usePagination";
 import { useOrders } from "../../../hooks/useOrders";
@@ -19,6 +28,8 @@ interface CustomerRecord {
 
 export default function ClienteTable() {
   const { data: orders = [], isPending: loading } = useOrders();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const { page, perPage, handleChangePage, handleChangeRowsPerPage } =
     usePagination();
@@ -139,7 +150,58 @@ export default function ClienteTable() {
           </Filter.Header>
         </Filter.Container>
       </DataTable.Toolbar>
-      <DataTable.Table columns={columns} data={customers} loading={loading} />
+      {isMobile ? (
+        <Stack spacing={1.25} sx={{ px: 1, py: 1.5, minWidth: 0 }}>
+          {customers.map((customer) => (
+            <RecordCard.Root key={customer.id}>
+              <RecordCard.Header>
+                <Box minWidth={0}>
+                  <RecordCard.Title>{customer.name}</RecordCard.Title>
+                  <RecordCard.Subtitle>{customer.cidade}</RecordCard.Subtitle>
+                </Box>
+                {customer.whatsapp && (
+                  <Tooltip title="Conversar no WhatsApp">
+                    <IconButton
+                      size="small"
+                      aria-label={`Conversar com ${customer.name} no WhatsApp`}
+                      href={`https://wa.me/${customer.whatsapp.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ color: "#25D366", flexShrink: 0 }}
+                    >
+                      <MessageSquareShare size={18} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </RecordCard.Header>
+              <RecordCard.Metrics>
+                <RecordCard.Metric
+                  label="Pedidos"
+                  value={customer.orderCount}
+                />
+                <RecordCard.Metric
+                  label="Total"
+                  value={`R$ ${customer.totalSpent.toFixed(2)}`}
+                />
+                <RecordCard.Metric
+                  label="Último pedido"
+                  value={new Date(customer.lastOrderDate).toLocaleDateString(
+                    "pt-BR",
+                  )}
+                  align="right"
+                />
+              </RecordCard.Metrics>
+            </RecordCard.Root>
+          ))}
+          {!loading && customers.length === 0 && (
+            <Typography color="text.secondary" textAlign="center" py={4}>
+              Nenhum cliente encontrado.
+            </Typography>
+          )}
+        </Stack>
+      ) : (
+        <DataTable.Table columns={columns} data={customers} loading={loading} />
+      )}
       <DataTable.Footer>
         <DataTable.Pagination
           count={customers.length}

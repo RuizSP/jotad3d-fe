@@ -68,12 +68,18 @@ export default function OrderTracking() {
   return (
     <Page.Root>
       <Page.Content>
-        <Box sx={{ maxWidth: "md", mx: "auto", width: "100%", pb: 8 }}>
+        <Box
+          sx={{ maxWidth: "md", mx: "auto", width: "100%", minWidth: 0, pb: 8 }}
+        >
           <Box sx={{ textAlign: "center", mb: 5 }}>
             <Typography
               variant="h4"
               fontWeight="900"
-              sx={{ letterSpacing: "-0.03em" }}
+              sx={{
+                fontSize: { xs: "1.7rem", sm: "2.125rem" },
+                lineHeight: 1.15,
+                overflowWrap: "anywhere",
+              }}
             >
               Acompanhar Produção 3D
             </Typography>
@@ -89,7 +95,7 @@ export default function OrderTracking() {
             <Paper
               elevation={0}
               sx={{
-                p: 1.5,
+                p: { xs: 1, sm: 1.5 },
                 mt: 3,
                 maxWidth: 480,
                 mx: "auto",
@@ -98,12 +104,14 @@ export default function OrderTracking() {
                 borderColor: "divider",
                 display: "flex",
                 gap: 1,
+                minWidth: 0,
               }}
             >
               <TextField
                 placeholder="Código (ex: JD-AB12CD34) ou número"
                 variant="standard"
                 fullWidth
+                sx={{ minWidth: 0, flex: 1 }}
                 value={searchInput}
                 onChange={(e) =>
                   setSearchState({ ...currentSearch, input: e.target.value })
@@ -111,7 +119,10 @@ export default function OrderTracking() {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 InputProps={{
                   disableUnderline: true,
-                  sx: { px: 2, fontSize: "0.95rem" },
+                  sx: {
+                    px: { xs: 1, sm: 2 },
+                    fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                  },
                 }}
               />
               <Button
@@ -125,7 +136,12 @@ export default function OrderTracking() {
                     <Search size={18} />
                   )
                 }
-                sx={{ borderRadius: "40px", px: 3, fontWeight: 700 }}
+                sx={{
+                  borderRadius: "40px",
+                  px: { xs: 1.5, sm: 3 },
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
               >
                 Buscar
               </Button>
@@ -149,8 +165,8 @@ export default function OrderTracking() {
             <Paper
               elevation={0}
               sx={{
-                p: { xs: 2.5, md: 4.5 },
-                borderRadius: 4,
+                p: { xs: 1.5, sm: 2.5, md: 4.5 },
+                borderRadius: { xs: 2, sm: 4 },
                 border: "1px solid",
                 borderColor: "divider",
               }}
@@ -163,7 +179,7 @@ export default function OrderTracking() {
                 gap={2}
                 mb={4}
               >
-                <Box>
+                <Box minWidth={0}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -180,7 +196,7 @@ export default function OrderTracking() {
                   </Typography>
                 </Box>
 
-                <Box display="flex" alignItems="center" gap={1.5}>
+                <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                   <StatusBadge status={order.status} />
                   <Button
                     variant="outlined"
@@ -189,7 +205,11 @@ export default function OrderTracking() {
                     href={`https://wa.me/${cleanPhone}?text=Olá,%20gostaria%20de%20saber%20sobre%20meu%20pedido%20${order.accessCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    sx={{ borderRadius: "30px", fontSize: "0.75rem" }}
+                    sx={{
+                      borderRadius: "30px",
+                      fontSize: "0.75rem",
+                      maxWidth: "100%",
+                    }}
                   >
                     Suporte WhatsApp
                   </Button>
@@ -213,7 +233,7 @@ export default function OrderTracking() {
                         key={step.key}
                         sx={{
                           display: "flex",
-                          gap: 2.5,
+                          gap: { xs: 1.5, sm: 2.5 },
                           alignItems: "flex-start",
                           position: "relative",
                         }}

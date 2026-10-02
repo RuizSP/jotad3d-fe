@@ -21,10 +21,18 @@ export default function PageTitle({
   typographyProps,
 }: PageTitleProps) {
   return (
-    <Stack direction="row" spacing={2} alignItems="center">
+    <Stack
+      direction="row"
+      spacing={{ xs: 1, sm: 2 }}
+      alignItems="center"
+      minWidth={0}
+    >
       {Icon && <Icon width={iconSize} height={iconSize} />}
 
-      <Breadcrumbs aria-label="breadcrumb">
+      <Breadcrumbs
+        aria-label="breadcrumb"
+        sx={{ minWidth: 0, "& .MuiBreadcrumbs-ol": { flexWrap: "wrap" } }}
+      >
         {links.map((item, index) => {
           const isLast = index === links.length - 1;
 
@@ -39,6 +47,8 @@ export default function PageTitle({
                 textDecoration: "none",
                 color: isLast ? "text.primary" : "inherit",
                 cursor: item.path && !isLast ? "pointer" : "default",
+                fontSize: { xs: "0.95rem", sm: "1.25rem" },
+                overflowWrap: "anywhere",
               }}
               {...typographyProps}
             >

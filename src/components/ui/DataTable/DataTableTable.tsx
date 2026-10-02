@@ -36,7 +36,7 @@ export default function DataTableTable<T>({
         border={"1px solid"}
         borderColor={"divider"}
         borderRadius={"8px"}
-        p={8}
+        p={{ xs: 3, sm: 8 }}
       >
         <SVG.NoData />
         <Typography variant="subtitle1" textAlign={"center"}>
@@ -79,6 +79,7 @@ export default function DataTableTable<T>({
           border: "none",
           height: "100%",
           minHeight: "400px",
+          minWidth: { xs: 680, md: "100%" },
           "--DataGrid-rowBorderColor": "transparent",
           "& .MuiDataGrid-row": {
             borderBottom: `1px solid ${theme.palette.divider}`,
