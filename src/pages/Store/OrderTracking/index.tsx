@@ -24,6 +24,7 @@ import { ORDER_STATUS_STEPS } from "../../../shared/interfaces/Order";
 import StatusBadge from "../../../components/common/StatusBadge";
 import ColorSwatch from "../../../components/common/ColorSwatch";
 import { useOrderTracking } from "../../../providers/OrderTrackingProvider";
+import StoreLocationAddress from "../../../components/common/StoreLocationAddress";
 
 export default function OrderTracking() {
   const { trackingCode, setTrackingCode } = useOrderTracking();
@@ -345,10 +346,14 @@ export default function OrderTracking() {
                   </Typography>
                   <Box p={2} borderRadius={2} bgcolor="background.default">
                     {order.deliveryMethod === "pickup" ? (
-                      <Typography variant="body2" color="text.secondary">
-                        O local e o horário da retirada serão combinados pelo
-                        WhatsApp.
-                      </Typography>
+                      order.storeLocation ? (
+                        <StoreLocationAddress location={order.storeLocation} />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          O local e o horário da retirada serão combinados pelo
+                          WhatsApp.
+                        </Typography>
+                      )
                     ) : order.address ? (
                       <>
                         <Box display="flex" alignItems="center" gap={1} mb={1}>

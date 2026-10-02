@@ -1,3 +1,5 @@
+import type { StoreLocation } from "./StoreLocation";
+
 export type OrderStatus =
   | "recebido"
   | "confirmacao"
@@ -83,6 +85,8 @@ export interface Order {
   whatsapp: string;
   email?: string;
   deliveryMethod: DeliveryMethod;
+  storeLocationId?: string | null;
+  storeLocation?: StoreLocation | null;
   address: DeliveryAddress | null;
   items: OrderItem[];
   totalAmount: number;

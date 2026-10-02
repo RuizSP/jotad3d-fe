@@ -40,6 +40,8 @@ import type { DeliveryMethod, Order } from "../../../shared/interfaces/Order";
 import ColorSwatch from "../../../components/common/ColorSwatch";
 import CopyButton from "../../../components/ui/CopyButton";
 import { useOrderTracking } from "../../../providers/OrderTrackingProvider";
+import { useActiveStoreLocation } from "../../../hooks/useStoreLocation";
+import StoreLocationAddress from "../../../components/common/StoreLocationAddress";
 
 interface CheckoutFormData {
   customerName: string;
@@ -104,6 +106,8 @@ export default function Checkout() {
   const [isSearchingCep, setIsSearchingCep] = useState(false);
   const { items, totalPrice, totalItems, clearCart } = useCart();
   const { setTrackingCode } = useOrderTracking();
+  const { data: storeLocation = null, isPending: isLoadingStoreLocation } =
+    useActiveStoreLocation();
   const navigate = useNavigate();
 
   const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
@@ -177,6 +181,8 @@ export default function Checkout() {
           whatsapp: data.whatsapp,
           email: data.email || undefined,
           deliveryMethod: data.deliveryMethod,
+          storeLocationId:
+            data.deliveryMethod === "pickup" ? storeLocation?.id || null : null,
           address:
             data.deliveryMethod === "delivery"
               ? {
@@ -370,6 +376,31 @@ export default function Checkout() {
                   </Box>
                 </Paper>
 
+                {createdOrder.deliveryMethod === "pickup" &&
+                  createdOrder.storeLocation && (
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        mb: 3,
+                        maxWidth: 420,
+                        mx: "auto",
+                        textAlign: "left",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        textTransform="uppercase"
+                      >
+                        Endereço para retirada
+                      </Typography>
+                      <StoreLocationAddress
+                        location={createdOrder.storeLocation}
+                      />
+                    </Paper>
+                  )}
+
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -505,10 +536,42 @@ export default function Checkout() {
                           <FormControlLabel
                             value="pickup"
                             control={<Radio />}
-                            label="Retirar no endereço da loja"
+                            disabled={!storeLocation}
+                            label={
+                              <Box>
+                                <Typography variant="body2">
+                                  Retirar no endereço da loja
+                                </Typography>
+                                {storeLocation && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    {storeLocation.city} - {storeLocation.state}
+                                  </Typography>
+                                )}
+                              </Box>
+                            }
                           />
                         </RadioGroup>
                       </FormControl>
+
+                      {isLoadingStoreLocation && (
+                        <Typography variant="caption" color="text.secondary">
+                          Carregando endereço da loja…
+                        </Typography>
+                      )}
+                      {!isLoadingStoreLocation && !storeLocation && (
+                        <Alert severity="info" sx={{ borderRadius: 2 }}>
+                          A retirada ainda não está disponível porque o endereço
+                          da loja não foi cadastrado.
+                        </Alert>
+                      )}
+                      {data.deliveryMethod === "pickup" && storeLocation && (
+                        <Paper variant="outlined" sx={{ p: 2 }}>
+                          <StoreLocationAddress location={storeLocation} />
+                        </Paper>
+                      )}
 
                       {data.deliveryMethod === "delivery" ? (
                         <>
@@ -631,10 +694,13 @@ export default function Checkout() {
                           Forma de recebimento
                         </Typography>
                         {data.deliveryMethod === "pickup" ? (
-                          <Typography variant="body2">
-                            Retirada no endereço da loja; local e horário serão
-                            combinados pelo WhatsApp.
-                          </Typography>
+                          storeLocation ? (
+                            <StoreLocationAddress location={storeLocation} />
+                          ) : (
+                            <Typography variant="body2">
+                              Endereço da loja indisponível.
+                            </Typography>
+                          )
                         ) : (
                           <>
                             <Typography variant="body2">

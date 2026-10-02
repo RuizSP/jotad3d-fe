@@ -4,6 +4,10 @@ import type {
   Order,
   OrderStatus,
 } from "../shared/interfaces/Order";
+import {
+  mapStoreLocation,
+  type StoreLocationRow,
+} from "./storeLocations.service";
 
 interface SupabaseOrderItemRow {
   produto_id: string | number | null;
@@ -19,6 +23,8 @@ interface SupabaseOrderRow {
   order_number: number | null;
   status: OrderStatus | null;
   delivery_method?: DeliveryMethod | null;
+  store_location_id?: string | null;
+  store_location?: StoreLocationRow | null;
   concluido: boolean | null;
   pronto_para_entrega: boolean | null;
   cliente_nome: string;
@@ -85,6 +91,10 @@ const mapOrder = (order: SupabaseOrderRow): Order => {
     notes: order.observacoes || "",
     createdAt: order.data_criacao || "",
     deliveryMethod: order.delivery_method || "delivery",
+    storeLocationId: order.store_location_id || null,
+    storeLocation: order.store_location
+      ? mapStoreLocation(order.store_location)
+      : null,
     address:
       order.delivery_method === "pickup"
         ? null
@@ -103,7 +113,9 @@ export const ordersService = {
   async getAll(): Promise<Order[]> {
     const { data, error } = await requireSupabase()
       .from("pedidos")
-      .select("*, pedido_itens(*, produtos(*))")
+      .select(
+        "*, pedido_itens(*, produtos(*)), store_location:store_locations(*)",
+      )
       .order("data_criacao", { ascending: false });
 
     if (error) throw error;
@@ -116,6 +128,10 @@ export const ordersService = {
       "id" | "accessCode" | "orderNumber" | "createdAt" | "status" | "paid"
     >,
   ): Promise<Order> {
+    if (orderInput.deliveryMethod === "pickup" && !orderInput.storeLocationId) {
+      throw new Error("Selecione um endereço ativo para retirada na loja.");
+    }
+
     const accessCode = generateAccessCode();
     const client = requireSupabase();
     const { data: insertedOrder, error: orderError } = await client
@@ -124,6 +140,7 @@ export const ordersService = {
         access_code: accessCode,
         status: "recebido",
         delivery_method: orderInput.deliveryMethod,
+        store_location_id: orderInput.storeLocationId || null,
         cliente_nome: orderInput.customerName,
         whatsapp: orderInput.whatsapp,
         email: orderInput.email || null,
@@ -139,7 +156,9 @@ export const ordersService = {
         concluido: false,
         observacoes: orderInput.notes || null,
       })
-      .select("id, access_code, order_number, status, data_criacao")
+      .select(
+        "id, access_code, order_number, status, data_criacao, store_location:store_locations(*)",
+      )
       .single();
 
     if (orderError) throw orderError;
@@ -178,6 +197,12 @@ export const ordersService = {
       createdAt: insertedOrder.data_criacao,
       status: insertedOrder.status as OrderStatus,
       paid: false,
+      storeLocationId: orderInput.storeLocationId || null,
+      storeLocation: insertedOrder.store_location
+        ? mapStoreLocation(
+            insertedOrder.store_location as unknown as StoreLocationRow,
+          )
+        : null,
     };
   },
 
@@ -219,7 +244,9 @@ export const ordersService = {
 
     const { data, error } = await requireSupabase()
       .from("pedidos")
-      .select("*, pedido_itens(*, produtos(*))")
+      .select(
+        "*, pedido_itens(*, produtos(*)), store_location:store_locations(*)",
+      )
       .or(filters.join(","))
       .limit(1)
       .maybeSingle();
@@ -232,7 +259,9 @@ export const ordersService = {
     const cleanPhone = companyNumber.replace(/\D/g, "");
     const receivingDetails =
       order.deliveryMethod === "pickup"
-        ? `*Recebimento:* Retirada no endereço da loja. O endereço será combinado pelo WhatsApp.%0A%0A`
+        ? order.storeLocation
+          ? `*Retirada na loja:* ${order.storeLocation.name}%0A${order.storeLocation.addressLine}, ${order.storeLocation.number}${order.storeLocation.complement ? `, ${order.storeLocation.complement}` : ""}%0A${order.storeLocation.neighborhood}, ${order.storeLocation.city} - ${order.storeLocation.state}, CEP ${order.storeLocation.postalCode}%0A%0A`
+          : `*Recebimento:* Retirada no endereço da loja. O endereço será combinado pelo WhatsApp.%0A%0A`
         : `*Endereço de Entrega:*%0A${order.address?.rua}, ${order.address?.numero}${order.address?.complemento ? ` (${order.address.complemento})` : ""} - ${order.address?.bairro}%0A${order.address?.cidade} - CEP: ${order.address?.cep}%0A%0A`;
     const itemsList = order.items
       .map(

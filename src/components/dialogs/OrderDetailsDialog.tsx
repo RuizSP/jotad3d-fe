@@ -5,6 +5,7 @@ import { Dialog } from "../ui/Dialog";
 import type { Order } from "../../shared/interfaces/Order";
 import StatusBadge from "../common/StatusBadge";
 import ColorSwatch from "../common/ColorSwatch";
+import StoreLocationAddress from "../common/StoreLocationAddress";
 
 export default function OrderDetailsDialog({
   open,
@@ -156,9 +157,14 @@ export default function OrderDetailsDialog({
             borderColor="divider"
           >
             {payload.deliveryMethod === "pickup" ? (
-              <Typography variant="body2" color="text.secondary">
-                O local e o horário da retirada serão combinados pelo WhatsApp.
-              </Typography>
+              payload.storeLocation ? (
+                <StoreLocationAddress location={payload.storeLocation} />
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  O local e o horário da retirada serão combinados pelo
+                  WhatsApp.
+                </Typography>
+              )
             ) : payload.address ? (
               <>
                 <Box display="flex" alignItems="center" gap={1} mb={0.5}>
