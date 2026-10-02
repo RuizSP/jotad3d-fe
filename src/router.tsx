@@ -4,6 +4,7 @@ import {
   Users as UsersIcon,
   Layers,
   Calculator,
+  Settings,
 } from "lucide-react";
 import { Route, Routes } from "react-router-dom";
 import Applayout from "./components/ui/Layout/AppLayout";
@@ -19,6 +20,9 @@ import ProductDetails from "./pages/Store/ProductDetails";
 import Checkout from "./pages/Store/Checkout";
 import Orders from "./pages/Store/Orders";
 import OrderTracking from "./pages/Store/OrderTracking";
+import AdminLogin from "./pages/Admin/Login";
+import RequireAdmin from "./components/auth/RequireAdmin";
+import StoreLocationSettings from "./pages/Admin/Settings";
 
 export const menu: MenuItem[] = [
   {
@@ -51,6 +55,12 @@ export const menu: MenuItem[] = [
     id: "clientes",
     path: "/admin/clientes",
   },
+  {
+    label: "Configurações",
+    icon: Settings,
+    id: "configuracoes",
+    path: "/admin/settings",
+  },
 ];
 
 export default function Router() {
@@ -63,13 +73,17 @@ export default function Router() {
         <Route path="tracking" element={<OrderTracking />} />
       </Route>
 
-      <Route path="/admin" element={<Applayout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="produtos" element={<AdminProducts />} />
-        <Route path="calculadora" element={<AdminCalculator />} />
-        <Route path="pedidos" element={<Orders />} />
-        <Route path="clientes" element={<Clientes />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route element={<RequireAdmin />}>
+        <Route path="/admin" element={<Applayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="produtos" element={<AdminProducts />} />
+          <Route path="calculadora" element={<AdminCalculator />} />
+          <Route path="pedidos" element={<Orders />} />
+          <Route path="clientes" element={<Clientes />} />
+          <Route path="settings" element={<StoreLocationSettings />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

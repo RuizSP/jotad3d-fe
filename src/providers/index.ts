@@ -5,3 +5,4 @@ export * from "./FilterProvider";
 export * from "./AppToolbarProvider";
 export * from "./CartContext";
 export * from "./OrderTrackingProvider";
+export * from "./AuthContext";

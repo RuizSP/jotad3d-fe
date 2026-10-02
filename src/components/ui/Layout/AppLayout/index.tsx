@@ -17,9 +17,9 @@ import {
 } from "@mui/material";
 import { menu } from "../../../../router";
 import type { MenuItem } from "../../../../shared/interfaces/MenuItem";
-import type { UserInfo } from "../../../../shared/interfaces/UserInfo";
 import ThemeSwitch from "../../ThemeSwitch";
 import { AppToolbar } from "../AppToolbar";
+import { useAuth } from "../../../../providers/AuthContext";
 
 export default function Applayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -29,18 +29,14 @@ export default function Applayout() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const navigate = useNavigate();
+  const { user } = useAuth();
   const handleSelect = (item: MenuItem) => {
     setActiveId(item.id);
     setMobileNavigationOpen(false);
     if (item.path) navigate(item.path);
   };
 
-  const user: UserInfo = {
-    name: "JOTAD 3D",
-    role: "Administrador",
-    avatarUrl:
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80",
-  };
+  const adminUser = user ?? { name: "Administrador", role: "ADMIN" };
 
   return (
     <AppShell
@@ -62,7 +58,7 @@ export default function Applayout() {
           <Box sx={{ display: { xs: "none", md: "block" }, flex: 1 }}>
             <Header.Search />
           </Box>
-          <Header.UserMenu user={user}>
+          <Header.UserMenu user={adminUser}>
             <ThemeSwitch />
           </Header.UserMenu>
         </Header.Root>

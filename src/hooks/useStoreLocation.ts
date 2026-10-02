@@ -1,5 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { storeLocationsService } from "../services/storeLocations.service";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import {
+  storeLocationsService,
+  type SaveStoreLocationInput,
+} from "../services/storeLocations.service";
 
 export const storeLocationQueryKeys = {
   active: ["store-location", "active"] as const,
@@ -11,5 +15,24 @@ export function useActiveStoreLocation() {
     queryFn: storeLocationsService.getActive,
     staleTime: 5 * 60_000,
     meta: { errorMessage: "Não foi possível carregar o endereço da loja." },
+  });
+}
+
+export function useSaveStoreLocation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SaveStoreLocationInput) =>
+      storeLocationsService.save(input),
+    onSuccess: () => {
+      toast.success("Endereço da loja salvo.");
+      return queryClient.invalidateQueries({
+        queryKey: storeLocationQueryKeys.active,
+      });
+    },
+    onError: (error) => {
+      console.error("Falha ao salvar endereço da loja.", error);
+      toast.error("Não foi possível salvar o endereço da loja.");
+    },
   });
 }

@@ -3,6 +3,8 @@ import { LogOut, PackageOpen, Settings } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import type { UserInfo } from "../../../shared/interfaces/UserInfo";
+import { useAuth } from "../../../providers/AuthContext";
+import { toast } from "react-toastify";
 import UserAvatar from "../UserAvatar/inex";
 import HeaderPopoverMenu from "./HeaderPopoverMenu";
 import HeaderUserInfo from "./HeaderUserInfo";
@@ -15,6 +17,7 @@ export default function HeaderUserMenu({
   user: UserInfo;
 }) {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const menuConfig = [
     {
       label: "Meus Pedidos",
@@ -37,9 +40,15 @@ export default function HeaderUserMenu({
     },
     {
       label: "Sair",
-      action: () => {
+      action: async () => {
         setOpen(false);
-        alert("Saindo...");
+        try {
+          await signOut();
+          navigate("/admin/login", { replace: true });
+        } catch (error) {
+          console.error("Falha ao encerrar sessão.", error);
+          toast.error("Não foi possível encerrar a sessão.");
+        }
       },
     },
   ];

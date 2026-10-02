@@ -19,7 +19,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Page } from "../../../components/ui/Page";
-import { useOrderByCodeOrNumber } from "../../../hooks/useOrders";
+import { useOrderByAccessCode } from "../../../hooks/useOrders";
 import { ORDER_STATUS_STEPS } from "../../../shared/interfaces/Order";
 import StatusBadge from "../../../components/common/StatusBadge";
 import ColorSwatch from "../../../components/common/ColorSwatch";
@@ -40,7 +40,7 @@ export default function OrderTracking() {
     isFetched,
     isFetching: loading,
     refetch,
-  } = useOrderByCodeOrNumber(searchCode);
+  } = useOrderByAccessCode(searchCode);
   const searched = Boolean(searchCode) && isFetched;
 
   const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
@@ -85,8 +85,8 @@ export default function OrderTracking() {
               color="text.secondary"
               sx={{ mt: 1, maxWidth: 500, mx: "auto" }}
             >
-              Insira o código de acompanhamento (ex: JD-AB12CD34) ou o número do
-              pedido para ver o status em tempo real.
+              Insira o código de acompanhamento (ex: JD-AB12CD34EF56) para consultar
+              o status do pedido.
             </Typography>
 
             <Paper
@@ -105,7 +105,7 @@ export default function OrderTracking() {
               }}
             >
               <TextField
-                placeholder="Código (ex: JD-AB12CD34) ou número"
+                placeholder="Código de acompanhamento"
                 variant="standard"
                 fullWidth
                 sx={{ minWidth: 0, flex: 1 }}

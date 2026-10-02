@@ -1,5 +1,18 @@
 # React + TypeScript + Vite
 
+## Supabase
+
+Após aplicar as migrations `01` a `07` da pasta `supabase/`, crie a conta administrativa em **Authentication > Users** no projeto Supabase. Promova somente essa conta pelo SQL Editor:
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
+  || jsonb_build_object('role', 'admin')
+where email = 'admin@exemplo.com';
+```
+
+Substitua o e-mail pelo da conta criada e encerre/inicie a sessão para renovar o token. O painel fica em `/admin/login`; a loja e o checkout continuam públicos. Cadastre o endereço da loja em **Administração > Configurações** para habilitar retirada. A leitura do local ativo é pública; alterações exigem a role `admin` em `app_metadata`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

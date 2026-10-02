@@ -17,12 +17,12 @@ export function useOrders() {
   });
 }
 
-export function useOrderByCodeOrNumber(code: string) {
+export function useOrderByAccessCode(code: string) {
   const normalizedCode = code.trim().toUpperCase();
 
   return useQuery({
     queryKey: orderQueryKeys.byCode(normalizedCode),
-    queryFn: () => ordersService.getByCodeOrNumber(normalizedCode),
+    queryFn: () => ordersService.getByAccessCode(normalizedCode),
     enabled: Boolean(normalizedCode),
     staleTime: 30_000,
     meta: { errorMessage: "Não foi possível buscar o pedido." },

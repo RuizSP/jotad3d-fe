@@ -11,10 +11,21 @@ import {
 
 interface SupabaseOrderItemRow {
   produto_id: string | number | null;
+  produto_nome?: string | null;
+  imagem_url?: string | null;
   produtos?: { nome: string | null; imagem_url: string | null } | null;
   quantidade: number;
   preco_unitario: number | string;
   cor_escolhida: string | null;
+}
+
+interface CreatedPublicOrderRow {
+  id: string;
+  access_code: string;
+  order_number: number;
+  status: OrderStatus;
+  data_criacao: string;
+  store_location: StoreLocationRow | null;
 }
 
 interface SupabaseOrderRow {
@@ -50,15 +61,6 @@ const requireSupabase = () => {
   return supabase;
 };
 
-const generateAccessCode = (): string => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let result = "JD-";
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
 const mapOrder = (order: SupabaseOrderRow): Order => {
   const status =
     order.status ||
@@ -79,8 +81,8 @@ const mapOrder = (order: SupabaseOrderRow): Order => {
     email: order.email || "",
     items: (order.pedido_itens || []).map((item) => ({
       productId: String(item.produto_id ?? ""),
-      productName: item.produtos?.nome || "Peça 3D",
-      imageUrl: item.produtos?.imagem_url || "",
+      productName: item.produto_nome || item.produtos?.nome || "Peça 3D",
+      imageUrl: item.imagem_url || item.produtos?.imagem_url || "",
       quantity: item.quantidade,
       unitPrice: Number(item.preco_unitario),
       color: item.cor_escolhida || "Preto",
@@ -128,66 +130,28 @@ export const ordersService = {
       "id" | "accessCode" | "orderNumber" | "createdAt" | "status" | "paid"
     >,
   ): Promise<Order> {
-    if (orderInput.deliveryMethod === "pickup" && !orderInput.storeLocationId) {
-      throw new Error("Selecione um endereço ativo para retirada na loja.");
-    }
+    const { data, error } = await requireSupabase().rpc("create_public_order", {
+      p_customer_name: orderInput.customerName,
+      p_whatsapp: orderInput.whatsapp,
+      p_email: orderInput.email || null,
+      p_delivery_method: orderInput.deliveryMethod,
+      p_store_location_id: orderInput.storeLocationId || null,
+      p_cep: orderInput.address?.cep || null,
+      p_address: orderInput.address?.rua || null,
+      p_number: orderInput.address?.numero || null,
+      p_neighborhood: orderInput.address?.bairro || null,
+      p_city: orderInput.address?.cidade || null,
+      p_complement: orderInput.address?.complemento || null,
+      p_total_amount: orderInput.totalAmount,
+      p_notes: orderInput.notes || null,
+      p_items: orderInput.items,
+    });
 
-    const accessCode = generateAccessCode();
-    const client = requireSupabase();
-    const { data: insertedOrder, error: orderError } = await client
-      .from("pedidos")
-      .insert({
-        access_code: accessCode,
-        status: "recebido",
-        delivery_method: orderInput.deliveryMethod,
-        store_location_id: orderInput.storeLocationId || null,
-        cliente_nome: orderInput.customerName,
-        whatsapp: orderInput.whatsapp,
-        email: orderInput.email || null,
-        cep: orderInput.address?.cep || null,
-        endereco: orderInput.address?.rua || null,
-        numero: orderInput.address?.numero || null,
-        bairro: orderInput.address?.bairro || null,
-        cidade: orderInput.address?.cidade || "Retirada na loja",
-        complemento: orderInput.address?.complemento || null,
-        valor_total: orderInput.totalAmount,
-        pago: false,
-        pronto_para_entrega: false,
-        concluido: false,
-        observacoes: orderInput.notes || null,
-      })
-      .select(
-        "id, access_code, order_number, status, data_criacao, store_location:store_locations(*)",
-      )
-      .single();
-
-    if (orderError) throw orderError;
-    if (!insertedOrder)
+    if (error) throw error;
+    if (!data || typeof data !== "object")
       throw new Error("O Supabase não retornou o pedido criado.");
 
-    if (orderInput.items.length > 0) {
-      const itemsToInsert = orderInput.items.map((item) => ({
-        pedido_id: insertedOrder.id,
-        produto_id: item.productId.startsWith("3d-") ? null : item.productId,
-        quantidade: item.quantity,
-        preco_unitario: item.unitPrice,
-        cor_escolhida: item.color || "Padrão",
-      }));
-      const { error: itemsError } = await client
-        .from("pedido_itens")
-        .insert(itemsToInsert);
-
-      if (itemsError) {
-        const { error: rollbackError } = await client
-          .from("pedidos")
-          .delete()
-          .eq("id", insertedOrder.id);
-        if (rollbackError) {
-          console.error("Falha ao remover pedido incompleto.", rollbackError);
-        }
-        throw itemsError;
-      }
-    }
+    const insertedOrder = data as unknown as CreatedPublicOrderRow;
 
     return {
       ...orderInput,
@@ -199,9 +163,7 @@ export const ordersService = {
       paid: false,
       storeLocationId: orderInput.storeLocationId || null,
       storeLocation: insertedOrder.store_location
-        ? mapStoreLocation(
-            insertedOrder.store_location as unknown as StoreLocationRow,
-          )
+        ? mapStoreLocation(insertedOrder.store_location)
         : null,
     };
   },
@@ -231,28 +193,17 @@ export const ordersService = {
     return Boolean(data);
   },
 
-  async getByCodeOrNumber(query: string): Promise<Order | null> {
-    const cleanQuery = query.trim().toUpperCase();
-    const safeQuery = cleanQuery.replace(/[^A-Z0-9-]/g, "");
-    const filters = [`access_code.eq.${safeQuery}`];
-    if (/^\d+$/.test(cleanQuery)) {
-      filters.push(`order_number.eq.${Number(cleanQuery)}`);
-    }
-    if (/^[0-9A-F-]{36}$/.test(cleanQuery)) {
-      filters.push(`id.eq.${cleanQuery}`);
-    }
+  async getByAccessCode(accessCode: string): Promise<Order | null> {
+    const safeCode = accessCode.trim().toUpperCase();
+    if (!/^JD-[A-Z0-9]{8,12}$/.test(safeCode)) return null;
 
-    const { data, error } = await requireSupabase()
-      .from("pedidos")
-      .select(
-        "*, pedido_itens(*, produtos(*)), store_location:store_locations(*)",
-      )
-      .or(filters.join(","))
-      .limit(1)
-      .maybeSingle();
+    const { data, error } = await requireSupabase().rpc(
+      "get_public_order_tracking",
+      { p_access_code: safeCode },
+    );
 
     if (error) throw error;
-    return data ? mapOrder(data as SupabaseOrderRow) : null;
+    return data ? mapOrder(data as unknown as SupabaseOrderRow) : null;
   },
 
   buildWhatsAppMessage(order: Order, companyNumber: string): string {

@@ -1,7 +1,7 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { DialogsProvider } from "@toolpad/core";
 import { BrowserRouter } from "react-router-dom";
-import { AppToolbarProvider, UserProvider } from "./providers";
+import { AppToolbarProvider, AuthProvider, UserProvider } from "./providers";
 import { CartProvider } from "./providers/CartContext";
 import {
   ThemeToggleProvider,
@@ -57,9 +57,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeToggleProvider>
-        <ErrorBoundary fallBack={(error) => <Error error={error} />}>
-          <AppContent />
-        </ErrorBoundary>
+        <AuthProvider>
+          <ErrorBoundary fallBack={(error) => <Error error={error} />}>
+            <AppContent />
+          </ErrorBoundary>
+        </AuthProvider>
       </ThemeToggleProvider>
     </QueryClientProvider>
   );
