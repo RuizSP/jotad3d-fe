@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
 import {
   Box,
   Button,
@@ -18,12 +17,22 @@ import ProductQuickViewDialog from "../../../components/dialogs/ProductQuickView
 import CustomQuoteDialog from "../../../components/dialogs/CustomQuoteDialog";
 import { useProducts } from "../../../hooks/useProducts";
 import type { Product } from "../../../shared/interfaces/Product";
+import { Filter } from "../../../components/ui/Filter";
+import { useFilter, useFilterApi } from "../../../providers/FilterProvider";
 
 export default function Home() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const urlCategory = searchParams.get("cat") || "Todos";
+  return (
+    <Filter.Provider initialFormValues={{ category: "Todos" }}>
+      <HomeCatalog />
+    </Filter.Provider>
+  );
+}
+
+function HomeCatalog() {
+  const { appliedValues } = useFilter<{ category: string }>();
+  const { applyFilterValue } = useFilterApi<{ category: string }>();
   const { data: products = [], isPending: loading } = useProducts();
-  const selectedCategory = urlCategory;
+  const selectedCategory = appliedValues?.category ?? "Todos";
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
@@ -219,13 +228,7 @@ export default function Home() {
                 key={cat}
                 label={cat}
                 clickable
-                onClick={() => {
-                  if (cat === "Todos") {
-                    setSearchParams({});
-                  } else {
-                    setSearchParams({ cat });
-                  }
-                }}
+                onClick={() => applyFilterValue("category", cat)}
                 variant={selectedCategory === cat ? "filled" : "outlined"}
                 color={selectedCategory === cat ? "primary" : "default"}
                 sx={{

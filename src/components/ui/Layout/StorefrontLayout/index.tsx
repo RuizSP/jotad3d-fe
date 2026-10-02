@@ -4,6 +4,7 @@ import StoreHeader from "../../StoreHeader";
 import CartDrawer from "../../CartDrawer";
 import StoreFooter from "../../StoreFooter";
 import CategoryNav from "../../CategoryNav";
+import { OrderTrackingProvider } from "../../../../providers/OrderTrackingProvider";
 
 export default function StorefrontLayout() {
   return (
@@ -11,8 +12,13 @@ export default function StorefrontLayout() {
       <StoreHeader />
       <CategoryNav />
 
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, pt: { xs: 3, sm: 4 } }}>
-        <Outlet />
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, pt: { xs: 3, sm: 4 } }}
+      >
+        <OrderTrackingProvider>
+          <Outlet />
+        </OrderTrackingProvider>
       </Box>
 
       <CartDrawer />

@@ -23,7 +23,6 @@ import {
   Disc,
   Clock,
   TrendingUp,
-  Copy,
   PlusCircle,
   Package,
   Wrench,
@@ -34,6 +33,7 @@ import { useDialogs } from "@toolpad/core";
 import { Page } from "../../../components/ui/Page";
 import ProductFormDialog from "../../../components/dialogs/ProductFormDialog";
 import { useProducts } from "../../../hooks/useProducts";
+import CopyButton from "../../../components/ui/CopyButton";
 
 const NEW_PRODUCT_VALUE = "__new__";
 
@@ -139,27 +139,22 @@ export default function AdminCalculator() {
     paintingSuppliesCost,
   ]);
 
-  const handleCopyBudget = async () => {
-    const budgetText = [
-      "✨ *Orçamento de Impressão 3D - JOTAD3D* ✨",
-      "",
-      `📦 *Peça:* ${modelName || "Sem nome"}`,
-      `🧵 *Material / Filamento:* ${materialType || "Não informado"} (~${weightGrams}g)`,
-      `⏱️ *Tempo Estimado de Produção:* ${printTimeHours}h`,
-      `🛠️ *Acabamento Padrão:* Incluso`,
-      "",
-      `💰 *Opção 1 (Cor do Filamento):* R$ ${calculations.suggestedPrice.toFixed(2)}`,
-      `🎨 *Opção 2 (Com Pintura Manual Artística):* R$ ${calculations.suggestedPriceWithPainting.toFixed(2)} (+R$ ${calculations.suggestedPaintingAddon.toFixed(2)})`,
-      "",
-      "💳 *Forma de Pagamento:* PIX à vista ou Cartão de Crédito",
-      "🚚 *Envio / Retirada:* Enviamos para todo o Brasil ou retirada local",
-      "",
-      "Para confirmar a produção e escolher a opção, responda esta mensagem!",
-    ].join("\n");
-
-    await navigator.clipboard.writeText(budgetText);
-    setCopiedSnackbar(true);
-  };
+  const budgetText = [
+    "✨ *Orçamento de Impressão 3D - JOTAD3D* ✨",
+    "",
+    `📦 *Peça:* ${modelName || "Sem nome"}`,
+    `🧵 *Material / Filamento:* ${materialType || "Não informado"} (~${weightGrams}g)`,
+    `⏱️ *Tempo Estimado de Produção:* ${printTimeHours}h`,
+    `🛠️ *Acabamento Padrão:* Incluso`,
+    "",
+    `💰 *Opção 1 (Cor do Filamento):* R$ ${calculations.suggestedPrice.toFixed(2)}`,
+    `🎨 *Opção 2 (Com Pintura Manual Artística):* R$ ${calculations.suggestedPriceWithPainting.toFixed(2)} (+R$ ${calculations.suggestedPaintingAddon.toFixed(2)})`,
+    "",
+    "💳 *Forma de Pagamento:* PIX à vista ou Cartão de Crédito",
+    "🚚 *Envio / Retirada:* Enviamos para todo o Brasil ou retirada local",
+    "",
+    "Para confirmar a produção e escolher a opção, responda esta mensagem!",
+  ].join("\n");
 
   const handleAddToCatalog = async () => {
     await dialogs.open(ProductFormDialog, {
@@ -757,17 +752,17 @@ export default function AdminCalculator() {
                   </Stack>
 
                   <Stack spacing={1.5} mt={3}>
-                    <Button
+                    <CopyButton
                       fullWidth
                       variant="contained"
                       color="primary"
                       size="large"
-                      startIcon={<Copy size={18} />}
-                      onClick={handleCopyBudget}
+                      value={budgetText}
+                      onCopied={() => setCopiedSnackbar(true)}
                       sx={{ fontWeight: 800, borderRadius: 2 }}
                     >
                       Copiar Orçamento WhatsApp
-                    </Button>
+                    </CopyButton>
 
                     <Button
                       fullWidth

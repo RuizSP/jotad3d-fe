@@ -33,6 +33,8 @@ import { useCreateOrder } from "../../../hooks/useOrders";
 import { cepService } from "../../../services/cep.service";
 import type { Order } from "../../../shared/interfaces/Order";
 import ColorSwatch from "../../../components/common/ColorSwatch";
+import CopyButton from "../../../components/ui/CopyButton";
+import { useOrderTracking } from "../../../providers/OrderTrackingProvider";
 
 interface CheckoutFormData {
   customerName: string;
@@ -72,6 +74,7 @@ export default function Checkout() {
   const submissionInProgress = useRef(false);
   const [isSearchingCep, setIsSearchingCep] = useState(false);
   const { items, totalPrice, totalItems, clearCart } = useCart();
+  const { setTrackingCode } = useOrderTracking();
   const navigate = useNavigate();
 
   const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
@@ -169,6 +172,7 @@ export default function Checkout() {
           notes: data.notes || undefined,
         });
 
+        setTrackingCode(order.accessCode);
         setCreatedOrder(order);
         clearCart();
         setActiveStep(3);
@@ -327,6 +331,15 @@ export default function Checkout() {
                   <Typography variant="caption" color="text.secondary">
                     Número do Pedido: #{createdOrder.orderNumber}
                   </Typography>
+                  <Box mt={1.5}>
+                    <CopyButton
+                      value={createdOrder.accessCode}
+                      size="small"
+                      sx={{ borderRadius: "30px" }}
+                    >
+                      Copiar código
+                    </CopyButton>
+                  </Box>
                 </Paper>
 
                 <Typography
@@ -373,9 +386,7 @@ export default function Checkout() {
                     variant="outlined"
                     size="large"
                     startIcon={<Search size={18} />}
-                    onClick={() =>
-                      navigate(`/tracking?code=${createdOrder.accessCode}`)
-                    }
+                    onClick={() => navigate("/tracking")}
                     sx={{
                       borderRadius: "40px",
                       px: 3,

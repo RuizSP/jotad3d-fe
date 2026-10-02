@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -24,19 +23,15 @@ import { useOrderByCodeOrNumber } from "../../../hooks/useOrders";
 import { ORDER_STATUS_STEPS } from "../../../shared/interfaces/Order";
 import StatusBadge from "../../../components/common/StatusBadge";
 import ColorSwatch from "../../../components/common/ColorSwatch";
+import { useOrderTracking } from "../../../providers/OrderTrackingProvider";
 
 export default function OrderTracking() {
-  const [searchParams] = useSearchParams();
-  const initialCode = searchParams.get("code") || "";
+  const { trackingCode, setTrackingCode } = useOrderTracking();
   const [searchState, setSearchState] = useState(() => ({
-    sourceCode: initialCode,
-    input: initialCode,
-    query: initialCode,
+    input: trackingCode,
+    query: trackingCode,
   }));
-  const currentSearch =
-    searchState.sourceCode === initialCode
-      ? searchState
-      : { sourceCode: initialCode, input: initialCode, query: initialCode };
+  const currentSearch = searchState;
   const { input: searchInput, query: searchCode } = currentSearch;
   const {
     data: order = null,
@@ -53,11 +48,12 @@ export default function OrderTracking() {
   const handleSearch = () => {
     const code = currentSearch.input.trim();
     if (!code) return;
+    setTrackingCode(code);
 
     if (code.toUpperCase() === currentSearch.query.trim().toUpperCase()) {
       void refetch();
     } else {
-      setSearchState({ ...currentSearch, input: code, query: code });
+      setSearchState({ input: code, query: code });
     }
   };
 
