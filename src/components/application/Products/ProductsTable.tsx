@@ -17,6 +17,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Plus,
@@ -35,6 +37,8 @@ import ColorSwatch from "../../common/ColorSwatch";
 export default function ProductsTable() {
   const { data: products = [], isPending: loading } = useProducts();
   const deleteProduct = useDeleteProduct();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteCandidate, setDeleteCandidate] = useState<Product | null>(null);
   const deleting = deleteProduct.isPending;
@@ -267,6 +271,7 @@ export default function ProductsTable() {
       <MuiDialog
         open={Boolean(deleteCandidate)}
         onClose={() => setDeleteCandidate(null)}
+        fullScreen={isMobile}
       >
         <DialogTitle>Excluir Peça do Catálogo?</DialogTitle>
         <DialogContent>
