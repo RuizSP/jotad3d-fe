@@ -20,6 +20,7 @@ import {
 import type { StoreLocation } from "../../../shared/interfaces/StoreLocation";
 import type { SaveStoreLocationInput } from "../../../services/storeLocations.service";
 import StoreLocationAddress from "../../../components/common/StoreLocationAddress";
+import BrandingSettings from "./BrandingSettings";
 
 interface StoreLocationFormData {
   name: string;
@@ -74,38 +75,29 @@ const toFormData = (location: StoreLocation | null): StoreLocationFormData => ({
 export default function StoreLocationSettings() {
   const locationQuery = useActiveStoreLocation();
 
-  if (locationQuery.isPending) {
-    return (
-      <Box display="flex" justifyContent="center" py={8}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (locationQuery.error) {
-    return (
-      <Alert severity="error">
-        Não foi possível carregar a configuração da loja.
-      </Alert>
-    );
-  }
-
   return (
     <Page.Root>
       <Page.Header>
         <Page.Title
           links={[
-            { title: "Painel JOTAD3D", path: "/admin/dashboard" },
+            { title: "Painel", path: "/admin/dashboard" },
             { title: "Configurações" },
           ]}
         />
       </Page.Header>
       <Page.Content>
-        <Box maxWidth={760} width="100%" mx="auto">
-          <StoreLocationForm
-            key={locationQuery.data?.id ?? "new-store-location"}
-            location={locationQuery.data ?? null}
-          />
+        <Box maxWidth={760} width="100%" mx="auto" display="grid" gap={3}>
+          <BrandingSettings />
+          {locationQuery.isPending ? (
+            <Box display="flex" justifyContent="center" py={5}><CircularProgress /></Box>
+          ) : locationQuery.error ? (
+            <Alert severity="error">Não foi possível carregar o contato e endereço da loja.</Alert>
+          ) : (
+            <StoreLocationForm
+              key={locationQuery.data?.id ?? "new-store-location"}
+              location={locationQuery.data ?? null}
+            />
+          )}
         </Box>
       </Page.Content>
     </Page.Root>

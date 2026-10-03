@@ -1,4 +1,4 @@
-import { Box, Tooltip } from "@mui/material";
+import { Box, Tooltip, alpha, useTheme } from "@mui/material";
 import { useCatalogOptions } from "../../hooks/useCatalogOptions";
 
 interface ColorSwatchProps {
@@ -14,6 +14,7 @@ export default function ColorSwatch({
   size = 20,
   onClick,
 }: ColorSwatchProps) {
+  const theme = useTheme();
   const { data: colors = [] } = useCatalogOptions("colors");
   const match = colors.find(
     (c) => c.name.toLowerCase() === colorName.toLowerCase()
@@ -32,8 +33,8 @@ export default function ColorSwatch({
           borderRadius: "50%",
           backgroundColor: hex,
           display: "inline-block",
-          border: selected ? "2px solid #D4AF37" : "1px solid rgba(0,0,0,0.15)",
-          boxShadow: selected ? "0 0 0 2px rgba(212,175,55,0.4)" : "none",
+          border: selected ? `2px solid ${theme.palette.secondary.main}` : "1px solid rgba(0,0,0,0.15)",
+          boxShadow: selected ? `0 0 0 2px ${alpha(theme.palette.secondary.main, 0.4)}` : "none",
           cursor: onClick ? "pointer" : "default",
           outline: "none",
           padding: 0,

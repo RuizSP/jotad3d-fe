@@ -5,12 +5,11 @@ import {
   IconButton,
   Stack,
   Button,
-  Typography,
 } from "@mui/material";
-import { ShoppingBag, Box as BoxIcon, Search, Sparkles } from "lucide-react";
+import { ShoppingBag, Search, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "../Header";
-import ThemeSwitch from "../ThemeSwitch";
+import BrandIdentity from "../../common/BrandIdentity";
 import { useCart } from "../../../providers/CartContext";
 import CustomQuoteDialog from "../../dialogs/CustomQuoteDialog";
 
@@ -34,36 +33,7 @@ export default function StoreHeader() {
               color: "text.primary",
             }}
           >
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                bgcolor: "#0A0A0A",
-                color: "#D4AF37",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                border: "1px solid #D4AF37",
-              }}
-            >
-              <BoxIcon size={20} />
-            </Box>
-            <Typography
-              variant="h6"
-              fontWeight="900"
-              sx={{
-                letterSpacing: "-0.03em",
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
-              JOTAD
-              <Box component="span" sx={{ color: "secondary.main" }}>
-                3D
-              </Box>
-            </Typography>
+            <BrandIdentity />
           </Box>
 
           <Stack
@@ -132,7 +102,6 @@ export default function StoreHeader() {
             </Badge>
           </IconButton>
 
-          <ThemeSwitch />
         </Stack>
       </Header.Root>
 

@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Grid,
@@ -36,10 +36,12 @@ import ProductFormDialog from "../../../components/dialogs/ProductFormDialog";
 import { useProducts } from "../../../hooks/useProducts";
 import { useCatalogOptions } from "../../../hooks/useCatalogOptions";
 import CopyButton from "../../../components/ui/CopyButton";
+import { useBranding } from "../../../hooks/useBranding";
 
 const NEW_PRODUCT_VALUE = "__new__";
 
 export default function AdminCalculator() {
+  const { branding } = useBranding();
   const dialogs = useDialogs();
 
   const { data: products = [] } = useProducts();
@@ -145,7 +147,7 @@ export default function AdminCalculator() {
   ]);
 
   const budgetText = [
-    "✨ *Orçamento de Impressão 3D - JOTAD3D* ✨",
+    `✨ *Orçamento de Impressão 3D - ${branding.companyName}* ✨`,
     "",
     `📦 *Peça:* ${modelName || "Sem nome"}`,
     `🧵 *Material / Filamento:* ${materialType || "Não informado"} (~${weightGrams}g)`,
@@ -155,8 +157,8 @@ export default function AdminCalculator() {
     `💰 *Opção 1 (Cor do Filamento):* R$ ${calculations.suggestedPrice.toFixed(2)}`,
     `🎨 *Opção 2 (Com Pintura Manual Artística):* R$ ${calculations.suggestedPriceWithPainting.toFixed(2)} (+R$ ${calculations.suggestedPaintingAddon.toFixed(2)})`,
     "",
-    "💳 *Forma de Pagamento:* PIX à vista ou Cartão de Crédito",
-    "🚚 *Envio / Retirada:* Enviamos para todo o Brasil ou retirada local",
+    `💳 *Forma de Pagamento:* ${branding.quotePaymentText}`,
+    `🚚 *Envio / Retirada:* ${branding.quoteDeliveryText}`,
     "",
     "Para confirmar a produção e escolher a opção, responda esta mensagem!",
   ].join("\n");
@@ -187,7 +189,7 @@ export default function AdminCalculator() {
       <Page.Content>
         <Box mb={3}>
           <Box display="flex" alignItems="center" gap={1.5} mb={0.5}>
-            <CalcIcon size={26} color="#D4AF37" />
+            <CalcIcon size={26} color={branding.accentColor} />
             <Typography variant="h5" fontWeight="800">
               Calculadora Técnica de Custos 3D
             </Typography>
@@ -204,7 +206,7 @@ export default function AdminCalculator() {
               <Card variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" gap={1} mb={2}>
-                    <Package size={18} color="#D4AF37" />
+                    <Package size={18} color={branding.accentColor} />
                     <Typography variant="subtitle1" fontWeight="700">
                       Identificação do Modelo
                     </Typography>
@@ -244,7 +246,7 @@ export default function AdminCalculator() {
               <Card variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" gap={1} mb={2}>
-                    <Disc size={18} color="#D4AF37" />
+                    <Disc size={18} color={branding.accentColor} />
                     <Typography variant="subtitle1" fontWeight="700">
                       Material (Filamento / Resina)
                     </Typography>
@@ -324,7 +326,7 @@ export default function AdminCalculator() {
               <Card variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" gap={1} mb={2}>
-                    <Clock size={18} color="#D4AF37" />
+                    <Clock size={18} color={branding.accentColor} />
                     <Typography variant="subtitle1" fontWeight="700">
                       Tempo de Máquina & Eletricidade
                     </Typography>
@@ -399,7 +401,7 @@ export default function AdminCalculator() {
               <Card variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" gap={1} mb={2}>
-                    <Wrench size={18} color="#D4AF37" />
+                    <Wrench size={18} color={branding.accentColor} />
                     <Typography variant="subtitle1" fontWeight="700">
                       Depreciação, Insumos & Mão de Obra
                     </Typography>
@@ -512,7 +514,7 @@ export default function AdminCalculator() {
               <Card variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" gap={1} mb={2}>
-                    <Paintbrush size={18} color="#D4AF37" />
+                    <Paintbrush size={18} color={branding.accentColor} />
                     <Typography variant="subtitle1" fontWeight="700">
                       Simulação de Pintura Manual Artística
                     </Typography>
@@ -566,7 +568,7 @@ export default function AdminCalculator() {
               <Card variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" gap={1} mb={1}>
-                    <TrendingUp size={18} color="#D4AF37" />
+                    <TrendingUp size={18} color={branding.accentColor} />
                     <Typography variant="subtitle1" fontWeight="700">
                       Margem de Lucro Desejada (Markup)
                     </Typography>
@@ -807,7 +809,7 @@ export default function AdminCalculator() {
                 sx={{ p: 2, borderRadius: 3, bgcolor: "grey.50" }}
               >
                 <Typography variant="caption" color="text.secondary">
-                  💡 <strong>Dica JOTAD3D:</strong> Em peças personalizadas com
+                  💡 <strong>Dica:</strong> Em peças personalizadas com
                   fatiamento complexo ou suportes orgânicos, adicione pelo menos
                   15% na perda de filamento para cobrir purgamento e testes de
                   tolerância mecânica.

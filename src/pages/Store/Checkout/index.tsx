@@ -42,6 +42,7 @@ import CopyButton from "../../../components/ui/CopyButton";
 import { useOrderTracking } from "../../../providers/OrderTrackingProvider";
 import { useActiveStoreLocation } from "../../../hooks/useStoreLocation";
 import StoreLocationAddress from "../../../components/common/StoreLocationAddress";
+import { useBranding } from "../../../hooks/useBranding";
 
 interface CheckoutFormData {
   customerName: string;
@@ -98,6 +99,7 @@ const checkoutValidationSchema = Yup.object().shape({
 });
 
 export default function Checkout() {
+  const { branding } = useBranding();
   const [activeStep, setActiveStep] = useState(0);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const createOrder = useCreateOrder();
@@ -339,7 +341,8 @@ export default function Checkout() {
                     bgcolor: "background.default",
                     maxWidth: 420,
                     mx: "auto",
-                    border: "2px dashed #D4AF37",
+                    border: "2px dashed",
+                    borderColor: "secondary.main",
                   }}
                 >
                   <Typography
@@ -433,6 +436,7 @@ export default function Checkout() {
                         ? ordersService.buildWhatsAppMessage(
                             createdOrder,
                             companyPhone,
+                            branding.companyName,
                           )
                         : ""
                     }

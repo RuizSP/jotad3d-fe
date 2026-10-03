@@ -24,7 +24,7 @@ export default function DialogTitle(props: DialogTitleProps) {
       alignItems="center"
       {...stackProps}
     >
-      {Icon && <Icon width={iconSize} height={iconSize} color="#D4AF37" />}
+      {Icon && <Icon width={iconSize} height={iconSize} color="currentColor" />}
       <Typography
         variant="subtitle1"
         fontWeight={800}

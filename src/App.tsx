@@ -17,6 +17,7 @@ import {
 } from "@tanstack/react-query";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import BrandMetadata from "./components/common/BrandMetadata";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -38,6 +39,7 @@ function AppContent() {
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <CssBaseline />
+        <BrandMetadata />
         <UserProvider>
           <CartProvider>
             <DialogsProvider>

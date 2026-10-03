@@ -9,6 +9,8 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import { Search, Sparkles, SlidersHorizontal, ArrowDown } from "lucide-react";
 import { Page } from "../../../components/ui/Page";
@@ -21,6 +23,7 @@ import { Filter } from "../../../components/ui/Filter";
 import { useFilter, useFilterApi } from "../../../providers/FilterProvider";
 import { useCatalogOptions } from "../../../hooks/useCatalogOptions";
 import { useSearchParams } from "react-router-dom";
+import { useBranding } from "../../../hooks/useBranding";
 
 export default function Home() {
   return (
@@ -31,6 +34,8 @@ export default function Home() {
 }
 
 function HomeCatalog() {
+  const { branding } = useBranding();
+  const theme = useTheme();
   const { appliedValues } = useFilter<{ category: string }>();
   const { applyFilterValue } = useFilterApi<{ category: string }>();
   const { data: products = [], isPending: loading } = useProducts();
@@ -74,19 +79,18 @@ function HomeCatalog() {
             p: { xs: 4, sm: 6, md: 8 },
             border: "1px solid #222222",
             boxShadow: "0 20px 40px -15px rgba(0,0,0,0.5)",
-            background:
-              "radial-gradient(circle at 80% 20%, rgba(212,175,55,0.15) 0%, rgba(10,10,10,0.98) 70%)",
+            background: `radial-gradient(circle at 80% 20%, ${alpha(theme.palette.secondary.main, 0.23)} 0%, #0A0A0A 70%)`,
           }}
         >
           <Stack spacing={3} maxWidth={720}>
             <Box display="flex" alignItems="center" gap={1}>
               <Chip
-                label="CATÁLOGO 2026 • IMPRESSÃO 3D"
+                label={branding.heroEyebrow}
                 size="small"
                 sx={{
-                  bgcolor: "rgba(212,175,55,0.15)",
-                  color: "#D4AF37",
-                  border: "1px solid rgba(212,175,55,0.4)",
+                  bgcolor: alpha(theme.palette.secondary.main, 0.2),
+                  color: "secondary.main",
+                  border: `1px solid ${alpha(theme.palette.secondary.main, 0.5)}`,
                   fontWeight: 800,
                   fontSize: "0.7rem",
                   letterSpacing: "0.08em",
@@ -104,9 +108,9 @@ function HomeCatalog() {
                 textTransform: "uppercase",
               }}
             >
-              PRECISÃO. DESIGN. <br />
-              <Box component="span" sx={{ color: "#D4AF37" }}>
-                ALTA PERFORMANCE.
+              {branding.heroTitle} <br />
+              <Box component="span" sx={{ color: "secondary.main" }}>
+                {branding.heroHighlight}
               </Box>
             </Typography>
 
@@ -119,8 +123,7 @@ function HomeCatalog() {
                 maxWidth: 580,
               }}
             >
-              Peças autorais, utilitários e projetos especiais sob demanda. Faça
-              seu pedido diretamente pelo catálogo sem necessidade de cadastro.
+              {branding.heroDescription}
             </Typography>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} pt={1}>
@@ -130,15 +133,15 @@ function HomeCatalog() {
                 href="#catalogo"
                 endIcon={<ArrowDown size={18} />}
                 sx={{
-                  bgcolor: "#D4AF37",
-                  color: "#0A0A0A",
+                  bgcolor: "secondary.main",
+                  color: "secondary.contrastText",
                   borderRadius: "40px",
                   px: 4,
                   py: 1.5,
                   fontWeight: 800,
                   fontSize: "0.95rem",
                   "&:hover": {
-                    bgcolor: "#E8C766",
+                    bgcolor: "secondary.light",
                   },
                 }}
               >
@@ -159,9 +162,9 @@ function HomeCatalog() {
                   fontWeight: 700,
                   fontSize: "0.95rem",
                   "&:hover": {
-                    borderColor: "#D4AF37",
-                    color: "#D4AF37",
-                    bgcolor: "rgba(212,175,55,0.05)",
+                    borderColor: "secondary.main",
+                    color: "secondary.main",
+                    bgcolor: alpha(theme.palette.secondary.main, 0.08),
                   },
                 }}
               >

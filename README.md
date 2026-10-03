@@ -1,8 +1,13 @@
-# React + TypeScript + Vite
+# Catálogo e gestão para impressão 3D
 
-## Supabase
+Frontend React, TypeScript e Vite para lojas de impressão 3D. Cada empresa usa uma instalação e um projeto Supabase próprios. A identidade da empresa é configurada no painel, sem alterar o código para cada cliente.
 
-Após aplicar as migrations `01` a `07` da pasta `supabase/`, crie a conta administrativa em **Authentication > Users** no projeto Supabase. Promova somente essa conta pelo SQL Editor:
+## Instalação
+
+1. Execute `yarn install`.
+2. Copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com os valores do projeto da empresa. Não coloque a service role key no frontend.
+3. Aplique, em ordem, todas as migrações de `supabase/` (`01` a `14`) pelo SQL Editor do projeto.
+4. Crie a conta administrativa em **Authentication > Users** e atribua a role no SQL Editor:
 
 ```sql
 update auth.users
@@ -11,76 +16,17 @@ set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
 where email = 'admin@exemplo.com';
 ```
 
-Substitua o e-mail pelo da conta criada e encerre/inicie a sessão para renovar o token. O painel fica em `/admin/login`; a loja e o checkout continuam públicos. Cadastre o endereço da loja em **Administração > Configurações** para habilitar retirada. A leitura do local ativo é pública; alterações exigem a role `admin` em `app_metadata`.
+Substitua o e-mail e faça login novamente para renovar o token. O painel fica em `/admin/login`.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+5. Em **Administração > Configurações**, preencha a identidade da empresa, envie o logo e cadastre o WhatsApp e endereço. O endereço habilita a retirada na loja.
+6. Execute `yarn dev` para desenvolvimento ou `yarn build` para gerar a versão de produção.
 
-Currently, two official plugins are available:
+## Personalização
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A migração `13` cria `store_branding`, um registro público de leitura com nome, logo, textos da vitrine, tema, cor de destaque e textos dos orçamentos. Somente contas com `app_metadata.role = admin` podem alterá-lo. Os logos ficam no bucket público `brand-assets`, com envio restrito a administradores. O frontend usa esses dados no cabeçalho, rodapé, aba do navegador, vitrine, mensagens de WhatsApp e calculadora. O tema escolhido no painel vale para todos os visitantes.
 
-## React Compiler
+A migração `14` troca o prefixo de novos códigos de pedido para `PD-`. Pedidos anteriores com `JD-` continuam aceitos na consulta. Para uma empresa nova, configure produtos, categorias, cores e materiais no seu próprio Supabase; o frontend não compartilha dados entre instalações.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Verificação
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
-
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+Antes de publicar uma instalação, execute `yarn lint` e `yarn build`. Verifique manualmente a vitrine e o checkout em tela pequena e grande, o envio de pedido e orçamento por WhatsApp, a consulta de pedido e o acesso administrativo. Confirme que uma conta pública consegue ler a identidade, mas não consegue editá-la nem enviar logos.

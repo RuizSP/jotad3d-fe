@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../providers/AuthContext";
+import BrandIdentity from "../../../components/common/BrandIdentity";
 
 interface LoginLocationState {
   from?: string;
@@ -76,6 +77,7 @@ export default function AdminLogin() {
         }}
       >
         <Stack spacing={2.5}>
+          <BrandIdentity />
           <Box>
             <Typography variant="h5" fontWeight={800}>
               Acesso administrativo

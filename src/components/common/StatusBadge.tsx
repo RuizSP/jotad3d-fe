@@ -9,7 +9,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: "default" | "pr
   recebido: { label: "Recebido", color: "default" },
   confirmacao: { label: "Confirmação", color: "warning" },
   producao: { label: "Em Produção", color: "info", bgcolor: "#1976D2", textColor: "#FFFFFF" },
-  impressao_concluida: { label: "Impressão Concluída", color: "primary", bgcolor: "#D4AF37", textColor: "#0A0A0A" },
+  impressao_concluida: { label: "Impressão Concluída", color: "secondary" },
   acabamento: { label: "Em Acabamento", color: "secondary", bgcolor: "#9C27B0", textColor: "#FFFFFF" },
   pronto: { label: "Pronto para Envio", color: "success", bgcolor: "#2E7D32", textColor: "#FFFFFF" },
   finalizado: { label: "Finalizado", color: "success" },
@@ -29,8 +29,8 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
         fontSize: "0.75rem",
         letterSpacing: "0.03em",
         borderRadius: "9999px",
-        bgcolor: config.bgcolor,
-        color: config.textColor,
+        bgcolor: status === "impressao_concluida" ? "secondary.main" : config.bgcolor,
+        color: status === "impressao_concluida" ? "secondary.contrastText" : config.textColor,
       }}
     />
   );

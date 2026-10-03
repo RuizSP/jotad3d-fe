@@ -30,7 +30,7 @@ interface CartContextData {
 }
 
 const CartContext = createContext<CartContextData>({} as CartContextData);
-const CART_STORAGE_KEY = "@jotad3d:cart";
+const CART_STORAGE_KEY = `@catalogo3d:${import.meta.env.VITE_SUPABASE_URL || "local"}:cart`;
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {

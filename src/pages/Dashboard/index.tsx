@@ -30,7 +30,6 @@ const STATUS_COLORS: Record<string, string> = {
   recebido: "#757575",
   confirmacao: "#FF9800",
   producao: "#1976D2",
-  impressao_concluida: "#D4AF37",
   acabamento: "#9C27B0",
   pronto: "#2E7D32",
   finalizado: "#388E3C",
@@ -71,7 +70,7 @@ export default function Dashboard() {
     const chartData = Object.entries(statusCounts).map(([status, count]) => ({
       name: status.replace("_", " "),
       value: count,
-      fill: STATUS_COLORS[status] || "#D4AF37",
+      fill: STATUS_COLORS[status] || theme.palette.secondary.main,
     }));
 
     return {
@@ -81,14 +80,14 @@ export default function Dashboard() {
       totalPrintedUnits,
       chartData,
     };
-  }, [orders]);
+  }, [orders, theme.palette.secondary.main]);
 
   return (
     <Page.Root>
       <Page.Header>
         <Page.Title
           icon={Home}
-          links={[{ title: "Painel JOTAD3D", path: "/admin/dashboard" }]}
+          links={[{ title: "Painel", path: "/admin/dashboard" }]}
         />
       </Page.Header>
 

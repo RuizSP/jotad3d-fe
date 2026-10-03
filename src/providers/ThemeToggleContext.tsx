@@ -1,61 +1,47 @@
-import { type Theme } from "@mui/material";
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
-import * as themes from "../themes";
+  createTheme,
+  darken,
+  getContrastRatio,
+  lighten,
+  type Theme,
+} from "@mui/material";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { useBranding } from "../hooks/useBranding";
+import { darkElegance, elegantGold } from "../themes";
 
-type ThemeName = keyof typeof themes;
+const ThemeToggleContext = createContext<Theme | undefined>(undefined);
 
-type ThemeToggleType = {
-  theme: Theme;
-  themeName: ThemeName;
-  setTheme: (name: ThemeName) => void;
-};
-type ThemeToggleProviderProps = {
-  children: ReactNode;
-};
-
-const ThemeToggleContext = createContext<ThemeToggleType | undefined>(
-  undefined,
-);
-
-export const themeStorageKey = "@jotad3d:theme";
-
-const DEFAULT_THEME_NAME: ThemeName = "elegantGold";
-
-export function ThemeToggleProvider({ children }: ThemeToggleProviderProps) {
-  const [themeName, setThemeName] = useState<ThemeName>(() => {
-    const storedTheme = localStorage.getItem(themeStorageKey);
-    return (storedTheme as ThemeName) || DEFAULT_THEME_NAME;
-  });
-
-  const theme: Theme = themes[themeName] || themes.elegantGold;
-
-  useEffect(() => {
-    localStorage.setItem(themeStorageKey, themeName);
-  }, [themeName]);
-
-  const setTheme = (name: ThemeName) => {
-    setThemeName(name);
-  };
+export function ThemeToggleProvider({ children }: { children: ReactNode }) {
+  const { branding } = useBranding();
+  const theme = useMemo(() => {
+    const base =
+      branding.themeName === "darkElegance" ? darkElegance : elegantGold;
+    const accent = branding.accentColor;
+    return createTheme(base, {
+      palette: {
+        secondary: {
+          main: accent,
+          light: lighten(accent, 0.25),
+          dark: darken(accent, 0.25),
+          contrastText:
+            getContrastRatio(accent, "#FFFFFF") >= 4.5 ? "#FFFFFF" : "#0A0A0A",
+        },
+      },
+    });
+  }, [branding.themeName, branding.accentColor]);
 
   return (
-    <ThemeToggleContext.Provider value={{ theme, themeName, setTheme }}>
+    <ThemeToggleContext.Provider value={theme}>
       {children}
     </ThemeToggleContext.Provider>
   );
 }
 
 export function useThemeToggle() {
-  const context = useContext(ThemeToggleContext);
-  if (!context) {
+  const theme = useContext(ThemeToggleContext);
+  if (!theme)
     throw new Error(
-      "useThemeToggle deve ser usado dentro de um ThemeToggleProvider ",
+      "useThemeToggle deve ser usado dentro de um ThemeToggleProvider",
     );
-  }
-  return context;
+  return { theme };
 }

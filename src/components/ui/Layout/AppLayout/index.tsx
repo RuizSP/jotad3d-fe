@@ -1,4 +1,4 @@
-import { Box as BoxIcon, Menu as MenuIcon, X } from "lucide-react";
+import { Menu as MenuIcon, X } from "lucide-react";
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { menu } from "../../../../router";
 import type { MenuItem } from "../../../../shared/interfaces/MenuItem";
-import ThemeSwitch from "../../ThemeSwitch";
+import BrandIdentity from "../../../common/BrandIdentity";
 import { useAuth } from "../../../../providers/AuthContext";
 
 export default function Applayout() {
@@ -51,15 +51,13 @@ export default function Applayout() {
                 <MenuIcon size={20} />
               </IconButton>
             )}
-            <Header.Brand companyName="JOTAD 3D" icon={BoxIcon} />
+            <BrandIdentity />
           </Stack>
 
           <Box sx={{ display: { xs: "none", md: "block" }, flex: 1 }}>
             <Header.Search />
           </Box>
-          <Header.UserMenu user={adminUser}>
-            <ThemeSwitch />
-          </Header.UserMenu>
+          <Header.UserMenu user={adminUser} />
         </Header.Root>
       }
       sidebar={
@@ -104,7 +102,7 @@ export default function Applayout() {
               justifyContent="space-between"
               mb={3}
             >
-              <Header.Brand companyName="JOTAD 3D" icon={BoxIcon} />
+              <BrandIdentity />
               <IconButton
                 aria-label="Fechar navegação"
                 onClick={() => setMobileNavigationOpen(false)}

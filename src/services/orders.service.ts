@@ -74,7 +74,7 @@ const mapOrder = (order: SupabaseOrderRow): Order => {
     id: String(order.id),
     accessCode:
       order.access_code ||
-      `JD-${String(order.id).replaceAll("-", "").slice(0, 8).toUpperCase()}`,
+      `PD-${String(order.id).replaceAll("-", "").slice(0, 8).toUpperCase()}`,
     orderNumber: Number(order.order_number),
     customerName: order.cliente_nome,
     whatsapp: order.whatsapp || "",
@@ -195,7 +195,7 @@ export const ordersService = {
 
   async getByAccessCode(accessCode: string): Promise<Order | null> {
     const safeCode = accessCode.trim().toUpperCase();
-    if (!/^JD-[A-Z0-9]{8,12}$/.test(safeCode)) return null;
+    if (!/^(JD|PD)-[A-Z0-9]{8,12}$/.test(safeCode)) return null;
 
     const { data, error } = await requireSupabase().rpc(
       "get_public_order_tracking",
@@ -206,7 +206,7 @@ export const ordersService = {
     return data ? mapOrder(data as unknown as SupabaseOrderRow) : null;
   },
 
-  buildWhatsAppMessage(order: Order, companyNumber: string): string {
+  buildWhatsAppMessage(order: Order, companyNumber: string, companyName: string): string {
     const cleanPhone = companyNumber.replace(/\D/g, "");
     const receivingDetails =
       order.deliveryMethod === "pickup"
@@ -222,7 +222,7 @@ export const ordersService = {
       .join("%0A");
 
     const text =
-      `*Olá, JOTAD3D! Realizei um novo pedido pelo site:*%0A%0A` +
+      `*Olá, ${companyName}! Realizei um novo pedido pelo site:*%0A%0A` +
       `*Código de Acompanhamento:* ${order.accessCode}%0A` +
       `*Número do Pedido:* #${order.orderNumber}%0A` +
       `*Cliente:* ${order.customerName}%0A` +
@@ -232,11 +232,12 @@ export const ordersService = {
       `*Valor Total:* R$ ${order.totalAmount.toFixed(2)}%0A%0A` +
       `Gostaria de confirmar o pedido e combinar o pagamento!`;
 
-    return `https://wa.me/${cleanPhone}?text=${text}`;
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text.replaceAll("%0A", "\n"))}`;
   },
 
   buildCustomQuoteUrl(
     companyNumber: string,
+    companyName: string,
     details: {
       name: string;
       whatsapp: string;
@@ -249,7 +250,7 @@ export const ordersService = {
   ): string {
     const cleanPhone = companyNumber.replace(/\D/g, "");
     const text =
-      `*Olá, JOTAD3D! Gostaria de um orçamento para peça personalizada:*%0A%0A` +
+      `*Olá, ${companyName}! Gostaria de um orçamento para peça personalizada:*%0A%0A` +
       `*Nome:* ${details.name}%0A` +
       `*WhatsApp:* ${details.whatsapp}%0A` +
       `*Descrição da Peça:* ${details.description}%0A` +
@@ -262,6 +263,6 @@ export const ordersService = {
         : "") +
       `%0AEnvio em seguida o arquivo ou fotos para análise!`;
 
-    return `https://wa.me/${cleanPhone}?text=${text}`;
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text.replaceAll("%0A", "\n"))}`;
   },
 };

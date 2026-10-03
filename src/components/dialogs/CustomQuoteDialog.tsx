@@ -17,6 +17,7 @@ import { ordersService } from "../../services/orders.service";
 import { Dialog } from "../ui/Dialog";
 import { useCatalogOptions } from "../../hooks/useCatalogOptions";
 import { useActiveStoreLocation } from "../../hooks/useStoreLocation";
+import { useBranding } from "../../hooks/useBranding";
 
 interface CustomQuoteDialogProps {
   open: boolean;
@@ -44,6 +45,7 @@ export default function CustomQuoteDialog({
   onClose,
 }: CustomQuoteDialogProps) {
   const { data: storeLocation } = useActiveStoreLocation();
+  const { branding } = useBranding();
   const { data: colors = [] } = useCatalogOptions("colors");
   const companyPhone = storeLocation?.whatsapp ?? "";
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
@@ -84,7 +86,7 @@ export default function CustomQuoteDialog({
     if (!isValid) return;
     if (!companyPhone) return;
 
-    const url = ordersService.buildCustomQuoteUrl(companyPhone, {
+    const url = ordersService.buildCustomQuoteUrl(companyPhone, branding.companyName, {
       name: data.name,
       whatsapp: data.whatsapp,
       description: data.description,
@@ -206,7 +208,7 @@ export default function CustomQuoteDialog({
                 }}
               >
                 <Box display="flex" alignItems="center" gap={1.5}>
-                  <FileCode2 size={24} color="#D4AF37" />
+                  <FileCode2 size={24} color="currentColor" />
                   <Box>
                     <Typography variant="body2" fontWeight="700" noWrap sx={{ maxWidth: 280 }}>
                       {attachedFile.name}
