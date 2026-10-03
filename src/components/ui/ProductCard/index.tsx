@@ -10,8 +10,7 @@ import {
   Chip,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Eye } from "lucide-react";
-import { useCart } from "../../../providers/CartContext";
+import { ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import ColorSwatch from "../../common/ColorSwatch";
 
@@ -36,19 +35,10 @@ export default function ProductCard({
   onQuickView,
 }: ProductProps) {
   const theme = useTheme();
-  const { addItem } = useCart();
-
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleOpenCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem({
-      id,
-      name,
-      price,
-      quantity: 1,
-      imageUrl,
-      color: availableColors[0] || "Preto",
-    });
+    onQuickView?.();
   };
 
   return (
@@ -59,6 +49,7 @@ export default function ProductCard({
     >
       <Card
         sx={{
+          position: "relative",
           borderRadius: 4,
           overflow: "hidden",
           boxShadow: theme.shadows[1],
@@ -75,6 +66,12 @@ export default function ProductCard({
           bgcolor: "background.paper",
         }}
       >
+        <Box
+          component={Link}
+          to={`/product/${id}`}
+          aria-label={`Ver detalhes de ${name}`}
+          sx={{ position: "absolute", inset: 0, zIndex: 1 }}
+        />
         <Box
           sx={{
             position: "relative",
@@ -118,36 +115,6 @@ export default function ProductCard({
             }}
           />
 
-          {onQuickView && (
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<Eye size={14} />}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onQuickView();
-              }}
-              sx={{
-                position: "absolute",
-                bottom: 12,
-                right: 12,
-                borderRadius: "20px",
-                fontSize: "0.75rem",
-                py: 0.5,
-                px: 1.5,
-                bgcolor: "rgba(10,10,10,0.8)",
-                color: "#FFFFFF",
-                backdropFilter: "blur(6px)",
-                "&:hover": {
-                  bgcolor: "secondary.main",
-                  color: "#0A0A0A",
-                },
-              }}
-            >
-              Espiar
-            </Button>
-          )}
         </Box>
 
         <CardContent
@@ -180,8 +147,6 @@ export default function ProductCard({
               letterSpacing: "-0.01em",
               lineHeight: 1.3,
             }}
-            component={Link}
-            to={`/product/${id}`}
           >
             {name}
           </Typography>
@@ -206,21 +171,25 @@ export default function ProductCard({
               </Typography>
             </Box>
 
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={handleAddToCart}
-              startIcon={<ShoppingCart size={16} />}
-              sx={{
-                borderRadius: "30px",
-                px: 2,
-                py: 0.8,
-                fontWeight: 700,
-              }}
-            >
-              Comprar
-            </Button>
+            {onQuickView && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={handleOpenCart}
+                startIcon={<ShoppingCart size={16} />}
+                sx={{
+                  position: "relative",
+                  zIndex: 2,
+                  borderRadius: "30px",
+                  px: 2,
+                  py: 0.8,
+                  fontWeight: 700,
+                }}
+              >
+                Adicionar ao carrinho
+              </Button>
+            )}
           </Stack>
         </CardContent>
       </Card>
