@@ -15,7 +15,7 @@ import { MessageSquareShare, UploadCloud, FileCode2, X } from "lucide-react";
 import { useForm } from "../../hooks/useForm";
 import { ordersService } from "../../services/orders.service";
 import { Dialog } from "../ui/Dialog";
-import { PRODUCT_COLORS } from "../../shared/interfaces/Product";
+import { useCatalogOptions } from "../../hooks/useCatalogOptions";
 import { useActiveStoreLocation } from "../../hooks/useStoreLocation";
 
 interface CustomQuoteDialogProps {
@@ -44,6 +44,7 @@ export default function CustomQuoteDialog({
   onClose,
 }: CustomQuoteDialogProps) {
   const { data: storeLocation } = useActiveStoreLocation();
+  const { data: colors = [] } = useCatalogOptions("colors");
   const companyPhone = storeLocation?.whatsapp ?? "";
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,7 +60,7 @@ export default function CustomQuoteDialog({
       name: "",
       whatsapp: "",
       description: "",
-      color: "Preto",
+      color: "",
       dimensions: "",
     },
     schema: customQuoteSchema,
@@ -151,8 +152,8 @@ export default function CustomQuoteDialog({
               onChange={(e) => changeValue("color", e.target.value)}
               sx={{ flex: 1 }}
             >
-              {PRODUCT_COLORS.map((col) => (
-                <MenuItem key={col.name} value={col.name}>
+              {colors.filter((col) => col.active).map((col) => (
+                <MenuItem key={col.id} value={col.name}>
                   {col.name}
                 </MenuItem>
               ))}

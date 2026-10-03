@@ -31,7 +31,7 @@ export default function ProductCard({
   price,
   imageUrl,
   category,
-  availableColors = ["Preto", "Branco", "Dourado"],
+  availableColors = [],
   onQuickView,
 }: ProductProps) {
   const theme = useTheme();

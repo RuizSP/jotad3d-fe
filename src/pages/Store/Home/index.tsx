@@ -19,6 +19,8 @@ import { useProducts } from "../../../hooks/useProducts";
 import type { Product } from "../../../shared/interfaces/Product";
 import { Filter } from "../../../components/ui/Filter";
 import { useFilter, useFilterApi } from "../../../providers/FilterProvider";
+import { useCatalogOptions } from "../../../hooks/useCatalogOptions";
+import { useSearchParams } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -32,7 +34,9 @@ function HomeCatalog() {
   const { appliedValues } = useFilter<{ category: string }>();
   const { applyFilterValue } = useFilterApi<{ category: string }>();
   const { data: products = [], isPending: loading } = useProducts();
-  const selectedCategory = appliedValues?.category ?? "Todos";
+  const { data: catalogCategories = [] } = useCatalogOptions("categories");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("cat") || appliedValues?.category || "Todos";
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
@@ -40,12 +44,8 @@ function HomeCatalog() {
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
 
   const categories = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => {
-      if (p.category) set.add(p.category);
-    });
-    return ["Todos", ...Array.from(set)];
-  }, [products]);
+    return ["Todos", ...catalogCategories.filter((category) => category.active).map((category) => category.name)];
+  }, [catalogCategories]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -228,7 +228,10 @@ function HomeCatalog() {
                 key={cat}
                 label={cat}
                 clickable
-                onClick={() => applyFilterValue("category", cat)}
+                onClick={() => {
+                  applyFilterValue("category", cat);
+                  setSearchParams(cat === "Todos" ? {} : { cat });
+                }}
                 variant={selectedCategory === cat ? "filled" : "outlined"}
                 color={selectedCategory === cat ? "primary" : "default"}
                 sx={{

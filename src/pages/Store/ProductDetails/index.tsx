@@ -30,16 +30,12 @@ import ColorSwatch from "../../../components/common/ColorSwatch";
 import CustomQuoteDialog from "../../../components/dialogs/CustomQuoteDialog";
 import ProductGallery from "../../../components/common/ProductGallery";
 import { getVariantImages } from "../../../shared/productImages";
+import { useCatalogOptions } from "../../../hooks/useCatalogOptions";
 
 const SCALE_OPTIONS = [
   { label: "Padrão (100%)", multiplier: 1 },
   { label: "Médio (+25%)", multiplier: 1.25 },
   { label: "Grande (+50%)", multiplier: 1.5 },
-];
-
-const MATERIAL_OPTIONS = [
-  { label: "PLA Silk / Matte", addPrice: 0 },
-  { label: "PETG Reforçado (+R$ 15)", addPrice: 15 },
 ];
 
 interface ProductCustomization {
@@ -56,7 +52,7 @@ const createInitialCustomization = (
   product?: Product,
 ): ProductCustomization => ({
   productId: product?.id ?? null,
-  selectedColor: product?.availableColors?.[0] ?? "Preto",
+  selectedColor: product?.availableColors?.[0] ?? "",
   selectedScaleIndex: 0,
   selectedMaterialIndex: 0,
   selectedFinishIndex: 0,
@@ -69,6 +65,11 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { data: product, isPending: loading, error } = useProduct(id);
+  const { data: catalogMaterials = [] } = useCatalogOptions("materials");
+  const materials = catalogMaterials.filter((option) => option.active).sort((a, b) =>
+    Number(b.name === product?.material) - Number(a.name === product?.material),
+  );
+  const { data: catalogColors = [] } = useCatalogOptions("colors");
   const [customization, setCustomization] = useState<ProductCustomization>(() =>
     createInitialCustomization(),
   );
@@ -104,13 +105,19 @@ export default function ProductDetails() {
       ? customization
       : createInitialCustomization(product);
   const {
-    selectedColor,
+    selectedColor: selectedColorChoice,
     selectedScaleIndex,
     selectedMaterialIndex,
     selectedFinishIndex,
     paintInstructions,
     quantity,
   } = activeCustomization;
+  const availableColors = (product.availableColors || []).filter((name) =>
+    catalogColors.some((option) => option.active && option.name === name),
+  );
+  const selectedColor = availableColors.includes(selectedColorChoice)
+    ? selectedColorChoice
+    : availableColors[0] || "";
 
   const updateCustomization = (
     updates: Partial<Omit<ProductCustomization, "productId">>,
@@ -136,29 +143,30 @@ export default function ProductDetails() {
   ];
 
   const currentScale = SCALE_OPTIONS[selectedScaleIndex];
-  const currentMaterial = MATERIAL_OPTIONS[selectedMaterialIndex];
+  const currentMaterial = materials[selectedMaterialIndex] || materials[0];
   const currentFinish = FINISH_OPTIONS[selectedFinishIndex];
   const unitPrice =
     Math.round(
       (product.price * currentScale.multiplier +
-        currentMaterial.addPrice +
+        (currentMaterial?.additionalPrice ?? 0) +
         currentFinish.addPrice) *
         100,
     ) / 100;
 
   const handleAddToCart = () => {
+    if (!currentMaterial || (currentFinish.id === "filamento" && !selectedColor)) return;
     const finishLabel =
       currentFinish.id === "pintura"
         ? `Pintura Manual Artística${paintInstructions ? ` (${paintInstructions})` : ""}`
         : `Filamento: ${selectedColor}`;
 
     addItem({
-      id: `${product.id}_s${selectedScaleIndex}_m${selectedMaterialIndex}_f${selectedFinishIndex}_${selectedColor}`,
+      id: `${product.id}_s${selectedScaleIndex}_m${currentMaterial.id}_f${selectedFinishIndex}_${selectedColor}`,
       name: `${product.name} (${currentScale.label.split(" ")[0]})`,
       price: unitPrice,
       quantity,
       imageUrl: getVariantImages(product, selectedColor, currentFinish.id === "pintura")[0] || product.imageUrl,
-      color: `${finishLabel} • ${currentMaterial.label.split(" ")[0]}`,
+      color: `${finishLabel} • ${currentMaterial.name}`,
     });
   };
 
@@ -294,10 +302,10 @@ export default function ProductDetails() {
                   Material / Filamento:
                 </Typography>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  {MATERIAL_OPTIONS.map((mat, idx) => (
+                  {materials.map((mat, idx) => (
                     <Chip
-                      key={mat.label}
-                      label={mat.label}
+                      key={mat.id}
+                      label={`${mat.name}${mat.additionalPrice ? ` (+R$ ${mat.additionalPrice.toFixed(2)})` : ""}`}
                       clickable
                       onClick={() =>
                         updateCustomization({ selectedMaterialIndex: idx })
@@ -391,7 +399,7 @@ export default function ProductDetails() {
                     flexWrap="wrap"
                   >
                     {(
-                      product.availableColors || ["Preto", "Branco", "Dourado"]
+                      availableColors
                     ).map((c) => (
                       <ColorSwatch
                         key={c}
@@ -460,7 +468,7 @@ export default function ProductDetails() {
                         </Typography>
                       </Box>
                       <Typography variant="body2" fontWeight="700">
-                        {currentMaterial.label.split(" ")[0]}
+                    {currentMaterial?.name || "Material indisponível"}
                       </Typography>
                     </Box>
                   </Grid>
@@ -562,6 +570,7 @@ export default function ProductDetails() {
                   fullWidth
                   startIcon={<ShoppingCart size={20} />}
                   onClick={handleAddToCart}
+                  disabled={!currentMaterial || (currentFinish.id === "filamento" && !selectedColor)}
                   sx={{
                     borderRadius: "40px",
                     py: 1.5,

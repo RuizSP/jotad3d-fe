@@ -5,6 +5,7 @@ import {
   Layers,
   Calculator,
   Settings,
+  ListPlus,
 } from "lucide-react";
 import { Route, Routes } from "react-router-dom";
 import Applayout from "./components/ui/Layout/AppLayout";
@@ -23,6 +24,7 @@ import OrderTracking from "./pages/Store/OrderTracking";
 import AdminLogin from "./pages/Admin/Login";
 import RequireAdmin from "./components/auth/RequireAdmin";
 import StoreLocationSettings from "./pages/Admin/Settings";
+import CatalogOptions from "./pages/Admin/CatalogOptions";
 
 export const menu: MenuItem[] = [
   {
@@ -36,6 +38,12 @@ export const menu: MenuItem[] = [
     icon: Layers,
     id: "produtos",
     path: "/admin/produtos",
+  },
+  {
+    label: "Opções do Catálogo",
+    icon: ListPlus,
+    id: "catalog-options",
+    path: "/admin/opcoes",
   },
   {
     label: "Calculadora 3D",
@@ -79,6 +87,7 @@ export default function Router() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="produtos" element={<AdminProducts />} />
+          <Route path="opcoes" element={<CatalogOptions />} />
           <Route path="calculadora" element={<AdminCalculator />} />
           <Route path="pedidos" element={<Orders />} />
           <Route path="clientes" element={<Clientes />} />

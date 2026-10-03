@@ -17,9 +17,10 @@ import type { DialogProps } from "@toolpad/core";
 import { Dialog } from "../ui/Dialog";
 import { useForm } from "../../hooks/useForm";
 import { useCreateProduct, useUpdateProduct } from "../../hooks/useProducts";
-import { PRODUCT_COLORS, type Product } from "../../shared/interfaces/Product";
+import type { Product } from "../../shared/interfaces/Product";
 import ColorSwatch from "../common/ColorSwatch";
 import { productImagesService } from "../../services/productImages.service";
+import { useCatalogOptions } from "../../hooks/useCatalogOptions";
 
 interface ProductFormData {
   name: string;
@@ -49,25 +50,6 @@ const existingGroups = (product?: Product | null): ImageGroups => {
   return groups;
 };
 
-const CATEGORY_OPTIONS = [
-  "Decoração",
-  "Colecionáveis",
-  "Setup & Escritório",
-  "Engenharia",
-  "Utilitários",
-  "Outros",
-];
-
-const MATERIAL_OPTIONS = [
-  "PLA Silk Premium",
-  "PLA Matte",
-  "PLA Duocolor Especial",
-  "PETG Reforçado",
-  "PETG Técnico",
-  "ABS Automotivo",
-  "Resina 8K Ultra",
-];
-
 const productValidationSchema = Yup.object().shape({
   name: Yup.string()
     .required("Informe o nome da peça")
@@ -82,7 +64,7 @@ const productValidationSchema = Yup.object().shape({
     .nullable()
     .typeError("Preço de pintura inválido")
     .min(0, "Não pode ser negativo"),
-  material: Yup.string(),
+  material: Yup.string().required("Selecione o material"),
   dimensions: Yup.string(),
   printTimeHours: Yup.number()
     .transform((value, originalValue) => originalValue === "" ? null : value)
@@ -99,8 +81,11 @@ export default function ProductFormDialog({
 }: DialogProps<Product | null, boolean>) {
   const isEditing = Boolean(payload && payload.id);
   const [selectedColors, setSelectedColors] = useState<string[]>(
-    payload?.availableColors || ["Preto", "Branco", "Dourado"],
+    payload?.availableColors || [],
   );
+  const { data: categories = [], error: categoriesError } = useCatalogOptions("categories");
+  const { data: colors = [], error: colorsError } = useCatalogOptions("colors");
+  const { data: materials = [], error: materialsError } = useCatalogOptions("materials");
   const [images, setImages] = useState<ImageGroups>(() => existingGroups(payload));
   const [uploading, setUploading] = useState(false);
   const createProduct = useCreateProduct();
@@ -112,10 +97,10 @@ export default function ProductFormDialog({
     useForm<ProductFormData>({
       initialValues: {
         name: payload?.name || "",
-        category: payload?.category || "Decoração",
+        category: payload?.category || "",
         price: payload?.price || "",
         paintingPrice: payload?.paintingPrice ?? "",
-        material: payload?.material || "PLA Silk Premium",
+        material: payload?.material || "",
         dimensions: payload?.dimensions || "",
         printTimeHours: payload?.printTimeHours || "",
         description: payload?.description || "",
@@ -127,16 +112,16 @@ export default function ProductFormDialog({
     if (payload) {
       setData({
         name: payload.name || "",
-        category: payload.category || "Decoração",
+        category: payload.category || "",
         price: payload.price ?? "",
         paintingPrice: payload.paintingPrice ?? "",
-        material: payload.material || "PLA Silk Premium",
+        material: payload.material || "",
         dimensions: payload.dimensions || "",
         printTimeHours: payload.printTimeHours ?? "",
         description: payload.description || "",
       });
       setSelectedColors(
-        payload.availableColors || ["Preto", "Branco", "Dourado"],
+        payload.availableColors || [],
       );
       setImages(existingGroups(payload));
     }
@@ -177,6 +162,10 @@ export default function ProductFormDialog({
     try {
       const isValid = await validation();
       if (!isValid) return;
+      if (categoriesError || colorsError || materialsError) {
+        toast.error("Não foi possível carregar as opções do catálogo.");
+        return;
+      }
       const variants = [...selectedColors, "Pintada"];
       if (!variants.some((variant) => images[variant]?.length)) {
         toast.error("Adicione pelo menos uma imagem.");
@@ -284,9 +273,9 @@ export default function ProductFormDialog({
                 onChange={(e) => changeValue("category", e.target.value)}
                 {...validationErrors("category")}
               >
-                {CATEGORY_OPTIONS.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat}
+                {[...categories.filter((option) => option.active), ...(data.category && !categories.some((option) => option.name === data.category && option.active) ? [{ id: "current", name: data.category }] : [])].map((cat) => (
+                  <MenuItem key={cat.id} value={cat.name}>
+                    {cat.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -322,9 +311,9 @@ export default function ProductFormDialog({
                 value={data.material}
                 onChange={(e) => changeValue("material", e.target.value)}
               >
-                {MATERIAL_OPTIONS.map((mat) => (
-                  <MenuItem key={mat} value={mat}>
-                    {mat}
+                {[...materials.filter((option) => option.active), ...(data.material && !materials.some((option) => option.name === data.material && option.active) ? [{ id: "current", name: data.material }] : [])].map((mat) => (
+                  <MenuItem key={mat.id} value={mat.name}>
+                    {mat.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -372,7 +361,7 @@ export default function ProductFormDialog({
               Cores Disponíveis do Filamento:
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-              {PRODUCT_COLORS.map((col) => {
+              {[...colors.filter((option) => option.active), ...selectedColors.filter((name) => !colors.some((option) => option.name === name && option.active)).map((name) => ({ id: name, name }))].map((col) => {
                 const isSelected = selectedColors.includes(col.name);
                 return (
                   <Chip

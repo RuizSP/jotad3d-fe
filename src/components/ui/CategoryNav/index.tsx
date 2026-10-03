@@ -9,26 +9,24 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import {
   Grid2X2,
-  Sparkles,
-  Box as BoxIcon,
-  Layers,
-  Wrench,
   Search,
 } from "lucide-react";
-
-const CATEGORIES = [
-  { label: "Todos", icon: Grid2X2, path: "/" },
-  { label: "Decoração", icon: Sparkles, path: "/?cat=Decoração" },
-  { label: "Colecionáveis", icon: BoxIcon, path: "/?cat=Colecionáveis" },
-  { label: "Setup & Escritório", icon: Layers, path: "/?cat=Setup+%26+Escritório" },
-  { label: "Engenharia", icon: Wrench, path: "/?cat=Engenharia" },
-  { label: "Acompanhar Produção", icon: Search, path: "/tracking" },
-];
+import { useCatalogOptions } from "../../../hooks/useCatalogOptions";
 
 export default function CategoryNav() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
+  const { data: categories = [] } = useCatalogOptions("categories");
+  const links = [
+    { label: "Todos", icon: Grid2X2, path: "/" },
+    ...categories.filter((category) => category.active).map((category) => ({
+      label: category.name,
+      icon: Grid2X2,
+      path: `/?cat=${encodeURIComponent(category.name)}`,
+    })),
+    { label: "Acompanhar Produção", icon: Search, path: "/tracking" },
+  ];
 
   if (isMobile) return null;
 
@@ -53,12 +51,14 @@ export default function CategoryNav() {
           justifyContent="center"
           sx={{ py: 1.5, overflowX: "auto" }}
         >
-          {CATEGORIES.map((cat) => {
+          {links.map((cat) => {
             const Icon = cat.icon;
             const isActive =
               cat.path === "/"
-                ? location.pathname === "/" && !location.search
-                : location.pathname + location.search === cat.path;
+                ? location.pathname === "/" && !new URLSearchParams(location.search).get("cat")
+                : cat.path === "/tracking"
+                  ? location.pathname === "/tracking"
+                  : location.pathname === "/" && new URLSearchParams(location.search).get("cat") === cat.label;
 
             return (
               <Stack

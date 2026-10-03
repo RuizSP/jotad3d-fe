@@ -25,6 +25,7 @@ import ColorSwatch from "../common/ColorSwatch";
 import { Dialog } from "../ui/Dialog";
 import ProductGallery from "../common/ProductGallery";
 import { getVariantImages } from "../../shared/productImages";
+import { useCatalogOptions } from "../../hooks/useCatalogOptions";
 
 interface ProductQuickViewDialogProps {
   product: Product | null;
@@ -38,19 +39,19 @@ const SCALE_OPTIONS = [
   { label: "Grande (+50%)", multiplier: 1.5 },
 ];
 
-const MATERIAL_OPTIONS = [
-  { label: "PLA Silk / Matte", addPrice: 0 },
-  { label: "PETG Reforçado (+R$ 15)", addPrice: 15 },
-];
-
 export default function ProductQuickViewDialog({
   product,
   open,
   onClose,
 }: ProductQuickViewDialogProps) {
   const { addItem } = useCart();
-  const [selectedColor, setSelectedColor] = useState<string>(
-    product?.availableColors?.[0] ?? "Preto",
+  const { data: catalogMaterials = [] } = useCatalogOptions("materials");
+  const materials = catalogMaterials.filter((option) => option.active).sort((a, b) =>
+    Number(b.name === product?.material) - Number(a.name === product?.material),
+  );
+  const { data: catalogColors = [] } = useCatalogOptions("colors");
+  const [selectedColorChoice, setSelectedColor] = useState<string>(
+    product?.availableColors?.[0] ?? "",
   );
   const [selectedScaleIndex, setSelectedScaleIndex] = useState<number>(0);
   const [selectedMaterialIndex, setSelectedMaterialIndex] = useState<number>(0);
@@ -59,6 +60,12 @@ export default function ProductQuickViewDialog({
   const [quantity, setQuantity] = useState<number>(1);
 
   if (!product) return null;
+  const availableColors = (product.availableColors || []).filter((name) =>
+    catalogColors.some((option) => option.active && option.name === name),
+  );
+  const selectedColor = availableColors.includes(selectedColorChoice)
+    ? selectedColorChoice
+    : availableColors[0] || "";
 
   const paintingPrice = product.paintingPrice ?? 35;
   const finishOptions = [
@@ -70,29 +77,30 @@ export default function ProductQuickViewDialog({
     },
   ];
   const currentScale = SCALE_OPTIONS[selectedScaleIndex];
-  const currentMaterial = MATERIAL_OPTIONS[selectedMaterialIndex];
+  const currentMaterial = materials[selectedMaterialIndex] || materials[0];
   const currentFinish = finishOptions[selectedFinishIndex];
   const unitPrice =
     Math.round(
       (product.price * currentScale.multiplier +
-        currentMaterial.addPrice +
+        (currentMaterial?.additionalPrice ?? 0) +
         currentFinish.addPrice) *
         100,
     ) / 100;
 
   const handleAddToCart = () => {
+    if (!currentMaterial || (currentFinish.id === "filamento" && !selectedColor)) return;
     const finishLabel =
       currentFinish.id === "pintura"
         ? `Pintura Artística Manual${paintInstructions ? ` (${paintInstructions})` : ""}`
         : `Filamento: ${selectedColor}`;
 
     addItem({
-      id: `${product.id}_s${selectedScaleIndex}_m${selectedMaterialIndex}_f${selectedFinishIndex}_${selectedColor}`,
+      id: `${product.id}_s${selectedScaleIndex}_m${currentMaterial.id}_f${selectedFinishIndex}_${selectedColor}`,
       name: `${product.name} (${currentScale.label.split(" ")[0]})`,
       price: unitPrice,
       quantity,
       imageUrl: getVariantImages(product, selectedColor, currentFinish.id === "pintura")[0] || product.imageUrl,
-      color: `${finishLabel} • ${currentMaterial.label.split(" ")[0]}`,
+      color: `${finishLabel} • ${currentMaterial.name}`,
     });
     onClose();
   };
@@ -197,10 +205,10 @@ export default function ProductQuickViewDialog({
                   Material / Filamento:
                 </Typography>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  {MATERIAL_OPTIONS.map((mat, idx) => (
+                  {materials.map((mat, idx) => (
                     <Chip
-                      key={mat.label}
-                      label={mat.label}
+                      key={mat.id}
+                      label={`${mat.name}${mat.additionalPrice ? ` (+R$ ${mat.additionalPrice.toFixed(2)})` : ""}`}
                       clickable
                       onClick={() => setSelectedMaterialIndex(idx)}
                       variant={
@@ -276,7 +284,7 @@ export default function ProductQuickViewDialog({
                   </Box>
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     {(
-                      product.availableColors || ["Preto", "Branco", "Dourado"]
+                      availableColors
                     ).map((colorName) => (
                       <ColorSwatch
                         key={colorName}
@@ -348,7 +356,7 @@ export default function ProductQuickViewDialog({
                 <Box display="flex" alignItems="center" gap={1}>
                   <Layers size={15} />
                   <Typography variant="caption" color="text.secondary">
-                    {currentMaterial.label.split(" ")[0]}
+                    {currentMaterial?.name || "Material indisponível"}
                   </Typography>
                 </Box>
               </Stack>
@@ -389,6 +397,7 @@ export default function ProductQuickViewDialog({
                   size="large"
                   startIcon={<ShoppingCart size={18} />}
                   onClick={handleAddToCart}
+                  disabled={!currentMaterial || (currentFinish.id === "filamento" && !selectedColor)}
                   sx={{
                     borderRadius: "40px",
                     py: 1.2,

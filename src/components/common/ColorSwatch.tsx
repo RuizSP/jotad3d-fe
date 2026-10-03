@@ -1,5 +1,5 @@
 import { Box, Tooltip } from "@mui/material";
-import { PRODUCT_COLORS } from "../../shared/interfaces/Product";
+import { useCatalogOptions } from "../../hooks/useCatalogOptions";
 
 interface ColorSwatchProps {
   colorName: string;
@@ -14,10 +14,11 @@ export default function ColorSwatch({
   size = 20,
   onClick,
 }: ColorSwatchProps) {
-  const match = PRODUCT_COLORS.find(
+  const { data: colors = [] } = useCatalogOptions("colors");
+  const match = colors.find(
     (c) => c.name.toLowerCase() === colorName.toLowerCase()
   );
-  const hex = match ? match.hex : "#888888";
+  const hex = match?.hex || "#888888";
 
   return (
     <Tooltip title={colorName} arrow>

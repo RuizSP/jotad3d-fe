@@ -34,6 +34,7 @@ import { useDialogs } from "@toolpad/core";
 import { Page } from "../../../components/ui/Page";
 import ProductFormDialog from "../../../components/dialogs/ProductFormDialog";
 import { useProducts } from "../../../hooks/useProducts";
+import { useCatalogOptions } from "../../../hooks/useCatalogOptions";
 import CopyButton from "../../../components/ui/CopyButton";
 
 const NEW_PRODUCT_VALUE = "__new__";
@@ -42,6 +43,9 @@ export default function AdminCalculator() {
   const dialogs = useDialogs();
 
   const { data: products = [] } = useProducts();
+  const { data: materials = [] } = useCatalogOptions("materials");
+  const { data: categories = [] } = useCatalogOptions("categories");
+  const { data: colors = [] } = useCatalogOptions("colors");
   const [selectedProductId, setSelectedProductId] =
     useState<string>(NEW_PRODUCT_VALUE);
   const [modelName, setModelName] = useState("");
@@ -168,12 +172,12 @@ export default function AdminCalculator() {
           : undefined,
       material: materialType,
       printTimeHours: Number(printTimeHours),
-      category: "Decoração",
+      category: categories.find((option) => option.active)?.name || "",
       imageUrl: "",
       description: materialType
         ? `Peça impressa em 3D em ${materialType}. Peso aproximado: ${weightGrams}g.`
         : "",
-      availableColors: ["Preto", "Branco", "Dourado"],
+      availableColors: colors.filter((option) => option.active).map((option) => option.name),
       inStock: true,
     });
   };
@@ -249,11 +253,15 @@ export default function AdminCalculator() {
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField
+                        select
                         fullWidth
                         label="Tipo de Filamento / Resina"
                         value={materialType}
                         onChange={(e) => setMaterialType(e.target.value)}
-                      />
+                      >
+                        {materialType && !materials.some((option) => option.name === materialType && option.active) && <MenuItem value={materialType}>{materialType}</MenuItem>}
+                        {materials.filter((option) => option.active).map((option) => <MenuItem key={option.id} value={option.name}>{option.name}</MenuItem>)}
+                      </TextField>
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField

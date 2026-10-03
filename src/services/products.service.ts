@@ -1,8 +1,6 @@
 import { supabase } from "./supabase";
 import type { Product } from "../shared/interfaces/Product";
 
-const DEFAULT_PRODUCT_COLORS = ["Preto", "Branco", "Dourado"];
-
 export const MOCK_PRODUCTS: Product[] = [];
 
 interface SupabaseProductRow {
@@ -39,7 +37,7 @@ const mapProduct = (item: SupabaseProductRow): Product => ({
   description: item.descricao || "",
   availableColors: Array.isArray(item.cores)
     ? item.cores
-    : DEFAULT_PRODUCT_COLORS,
+    : [],
   dimensions: item.dimensoes || undefined,
   material: item.material || "PLA Premium",
   printTimeHours:
