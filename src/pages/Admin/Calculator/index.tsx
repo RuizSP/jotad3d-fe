@@ -28,6 +28,7 @@ import {
   Wrench,
   CheckCircle2,
   Paintbrush,
+  MessageSquareShare,
 } from "lucide-react";
 import { useDialogs } from "@toolpad/core";
 import { Page } from "../../../components/ui/Page";
@@ -761,8 +762,22 @@ export default function AdminCalculator() {
                       onCopied={() => setCopiedSnackbar(true)}
                       sx={{ fontWeight: 800, borderRadius: 2 }}
                     >
-                      Copiar Orçamento WhatsApp
+                      Copiar orçamento
                     </CopyButton>
+
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      color="primary"
+                      size="large"
+                      startIcon={<MessageSquareShare size={18} />}
+                      href={`https://wa.me/?text=${encodeURIComponent(budgetText)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ fontWeight: 800, borderRadius: 2 }}
+                    >
+                      Enviar pelo WhatsApp
+                    </Button>
 
                     <Button
                       fullWidth
