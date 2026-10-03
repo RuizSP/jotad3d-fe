@@ -31,6 +31,7 @@ interface StoreLocationFormData {
   state: string;
   postalCode: string;
   instructions: string;
+  whatsapp: string;
 }
 
 const storeLocationSchema: Yup.ObjectSchema<StoreLocationFormData> = Yup.object(
@@ -47,6 +48,13 @@ const storeLocationSchema: Yup.ObjectSchema<StoreLocationFormData> = Yup.object(
       .required("Informe o estado"),
     postalCode: Yup.string().trim().required("Informe o CEP"),
     instructions: Yup.string().defined(),
+    whatsapp: Yup.string()
+      .required("Informe o WhatsApp da empresa")
+      .test(
+        "phone-length",
+        "Informe o número com código do país e DDD (10 a 15 dígitos)",
+        (value) => /^\d{10,15}$/.test((value ?? "").replace(/\D/g, "")),
+      ),
   },
 );
 
@@ -60,6 +68,7 @@ const toFormData = (location: StoreLocation | null): StoreLocationFormData => ({
   state: location?.state ?? "",
   postalCode: location?.postalCode ?? "",
   instructions: location?.instructions ?? "",
+  whatsapp: location?.whatsapp ?? "",
 });
 
 export default function StoreLocationSettings() {
@@ -140,11 +149,11 @@ function StoreLocationForm({ location }: { location: StoreLocation | null }) {
       <Stack spacing={2.5}>
         <Box>
           <Typography variant="h6" fontWeight={800}>
-            Endereço para retirada
+            Contato e endereço da loja
           </Typography>
           <Typography variant="body2" color="text.secondary" mt={0.5}>
-            Este endereço será exibido aos clientes que escolherem retirar o
-            pedido.
+            O WhatsApp recebe pedidos e orçamentos. O endereço será exibido aos
+            clientes que escolherem retirar o pedido.
           </Typography>
         </Box>
 
@@ -156,6 +165,22 @@ function StoreLocationForm({ location }: { location: StoreLocation | null }) {
         {formError && <Alert severity="error">{formError}</Alert>}
 
         <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              label="WhatsApp da empresa"
+              type="tel"
+              placeholder="5511999999999"
+              value={data.whatsapp}
+              onChange={(event) => changeValue("whatsapp", event.target.value)}
+              {...validationErrors("whatsapp")}
+              helperText={
+                validationErrors("whatsapp").error
+                  ? validationErrors("whatsapp").helperText
+                  : "Inclua o código do país e o DDD. Ex.: 55 11 99999-9999"
+              }
+              fullWidth
+            />
+          </Grid>
           <Grid size={{ xs: 12 }}>
             <TextField
               label="Nome do local"
@@ -286,7 +311,7 @@ function StoreLocationForm({ location }: { location: StoreLocation | null }) {
               ) : undefined
             }
           >
-            {location ? "Salvar endereço" : "Cadastrar endereço"}
+            {location ? "Salvar configurações" : "Cadastrar loja"}
           </Button>
         </Box>
       </Stack>

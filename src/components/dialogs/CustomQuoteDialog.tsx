@@ -16,6 +16,7 @@ import { useForm } from "../../hooks/useForm";
 import { ordersService } from "../../services/orders.service";
 import { Dialog } from "../ui/Dialog";
 import { PRODUCT_COLORS } from "../../shared/interfaces/Product";
+import { useActiveStoreLocation } from "../../hooks/useStoreLocation";
 
 interface CustomQuoteDialogProps {
   open: boolean;
@@ -42,7 +43,8 @@ export default function CustomQuoteDialog({
   open,
   onClose,
 }: CustomQuoteDialogProps) {
-  const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
+  const { data: storeLocation } = useActiveStoreLocation();
+  const companyPhone = storeLocation?.whatsapp ?? "";
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,6 +81,7 @@ export default function CustomQuoteDialog({
   const handleSubmit = async () => {
     const isValid = await validation();
     if (!isValid) return;
+    if (!companyPhone) return;
 
     const url = ordersService.buildCustomQuoteUrl(companyPhone, {
       name: data.name,
@@ -104,6 +107,11 @@ export default function CustomQuoteDialog({
       </Dialog.Header>
 
       <Dialog.Content>
+        {!companyPhone && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            O WhatsApp da loja ainda não foi configurado.
+          </Alert>
+        )}
         <Stack spacing={2.5}>
           <Alert severity="info" sx={{ borderRadius: 2 }}>
             Tem um arquivo 3D (.STL, .OBJ, .STEP) ou uma ideia para modelar? Preencha os
@@ -226,6 +234,7 @@ export default function CustomQuoteDialog({
           <Dialog.ActionSubmit
             startIcon={<MessageSquareShare size={18} />}
             onClick={handleSubmit}
+            disabled={!companyPhone}
           >
             Enviar via WhatsApp
           </Dialog.ActionSubmit>

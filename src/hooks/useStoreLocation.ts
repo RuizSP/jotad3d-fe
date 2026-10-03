@@ -14,7 +14,7 @@ export function useActiveStoreLocation() {
     queryKey: storeLocationQueryKeys.active,
     queryFn: storeLocationsService.getActive,
     staleTime: 5 * 60_000,
-    meta: { errorMessage: "Não foi possível carregar o endereço da loja." },
+    meta: { errorMessage: "Não foi possível carregar as configurações da loja." },
   });
 }
 
@@ -25,14 +25,14 @@ export function useSaveStoreLocation() {
     mutationFn: (input: SaveStoreLocationInput) =>
       storeLocationsService.save(input),
     onSuccess: () => {
-      toast.success("Endereço da loja salvo.");
+      toast.success("Configurações da loja salvas.");
       return queryClient.invalidateQueries({
         queryKey: storeLocationQueryKeys.active,
       });
     },
     onError: (error) => {
-      console.error("Falha ao salvar endereço da loja.", error);
-      toast.error("Não foi possível salvar o endereço da loja.");
+      console.error("Falha ao salvar configurações da loja.", error);
+      toast.error("Não foi possível salvar as configurações da loja.");
     },
   });
 }

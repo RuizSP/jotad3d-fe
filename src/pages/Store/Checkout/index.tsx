@@ -110,7 +110,7 @@ export default function Checkout() {
     useActiveStoreLocation();
   const navigate = useNavigate();
 
-  const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
+  const companyPhone = storeLocation?.whatsapp ?? "";
 
   const handleCepChange = async (val: string) => {
     changeValue("cep", val);
@@ -412,6 +412,13 @@ export default function Checkout() {
                   qualquer momento pelo site.
                 </Typography>
 
+                {!companyPhone && (
+                  <Alert severity="warning" sx={{ mb: 3, maxWidth: 500, mx: "auto" }}>
+                    O WhatsApp da loja ainda não foi configurado. Guarde o código
+                    para acompanhar seu pedido pelo site.
+                  </Alert>
+                )}
+
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={2}
@@ -421,10 +428,15 @@ export default function Checkout() {
                     variant="contained"
                     size="large"
                     startIcon={<MessageSquareShare size={20} />}
-                    href={ordersService.buildWhatsAppMessage(
-                      createdOrder,
-                      companyPhone,
-                    )}
+                    href={
+                      companyPhone
+                        ? ordersService.buildWhatsAppMessage(
+                            createdOrder,
+                            companyPhone,
+                          )
+                        : ""
+                    }
+                    disabled={!companyPhone}
                     target="_blank"
                     rel="noopener noreferrer"
                     sx={{

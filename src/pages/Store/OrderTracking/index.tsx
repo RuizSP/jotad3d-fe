@@ -25,6 +25,7 @@ import StatusBadge from "../../../components/common/StatusBadge";
 import ColorSwatch from "../../../components/common/ColorSwatch";
 import { useOrderTracking } from "../../../providers/OrderTrackingProvider";
 import StoreLocationAddress from "../../../components/common/StoreLocationAddress";
+import { useActiveStoreLocation } from "../../../hooks/useStoreLocation";
 
 export default function OrderTracking() {
   const { trackingCode, setTrackingCode } = useOrderTracking();
@@ -43,7 +44,8 @@ export default function OrderTracking() {
   } = useOrderByAccessCode(searchCode);
   const searched = Boolean(searchCode) && isFetched;
 
-  const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
+  const { data: storeLocation } = useActiveStoreLocation();
+  const companyPhone = storeLocation?.whatsapp ?? "";
   const cleanPhone = companyPhone.replace(/\D/g, "");
 
   const handleSearch = () => {
@@ -195,7 +197,7 @@ export default function OrderTracking() {
 
                 <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                   <StatusBadge status={order.status} />
-                  <Button
+                  {cleanPhone && <Button
                     variant="outlined"
                     size="small"
                     startIcon={<MessageCircle size={16} />}
@@ -209,7 +211,7 @@ export default function OrderTracking() {
                     }}
                   >
                     Suporte WhatsApp
-                  </Button>
+                  </Button>}
                 </Box>
               </Box>
 

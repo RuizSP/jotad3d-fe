@@ -9,4 +9,5 @@ export interface StoreLocation {
   state: string;
   postalCode: string;
   instructions?: string | null;
+  whatsapp: string | null;
 }

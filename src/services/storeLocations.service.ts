@@ -12,6 +12,7 @@ export interface StoreLocationRow {
   state: string;
   postal_code: string;
   instructions: string | null;
+  whatsapp: string | null;
 }
 
 export interface SaveStoreLocationInput {
@@ -25,6 +26,7 @@ export interface SaveStoreLocationInput {
   state: string;
   postalCode: string;
   instructions: string;
+  whatsapp: string;
 }
 
 export function mapStoreLocation(row: StoreLocationRow): StoreLocation {
@@ -39,6 +41,7 @@ export function mapStoreLocation(row: StoreLocationRow): StoreLocation {
     state: row.state,
     postalCode: row.postal_code,
     instructions: row.instructions,
+    whatsapp: row.whatsapp,
   };
 }
 
@@ -73,6 +76,7 @@ export const storeLocationsService = {
       state: input.state.trim().toUpperCase(),
       postal_code: input.postalCode.trim(),
       instructions: input.instructions.trim() || null,
+      whatsapp: input.whatsapp.replace(/\D/g, ""),
       is_active: true,
     };
 

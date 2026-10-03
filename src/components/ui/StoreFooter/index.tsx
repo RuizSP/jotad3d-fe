@@ -9,9 +9,11 @@ import {
 } from "@mui/material";
 import { Box as BoxIcon, MessageCircle, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useActiveStoreLocation } from "../../../hooks/useStoreLocation";
 
 export default function StoreFooter() {
-  const companyPhone = import.meta.env.VITE_COMPANY_WHATSAPP || "5511999999999";
+  const { data: storeLocation } = useActiveStoreLocation();
+  const companyPhone = storeLocation?.whatsapp ?? "";
   const cleanPhone = companyPhone.replace(/\D/g, "");
 
   return (
@@ -55,7 +57,7 @@ export default function StoreFooter() {
               colecionáveis, prototipagem rápida e engenharia de precisão com acabamento premium.
             </Typography>
 
-            <Button
+            {cleanPhone && <Button
               variant="outlined"
               href={`https://wa.me/${cleanPhone}`}
               target="_blank"
@@ -76,7 +78,7 @@ export default function StoreFooter() {
               }}
             >
               Falar no WhatsApp
-            </Button>
+            </Button>}
           </Grid>
 
           <Grid size={{ xs: 6, sm: 4, md: 2 }}>
