@@ -11,6 +11,7 @@ interface SupabaseProductRow {
   preco: number | string;
   preco_pintura: number | string | null;
   imagem_url: string | null;
+  imagens_por_variacao: Record<string, string[]> | null;
   categoria: string | null;
   descricao: string | null;
   cores: string[] | null;
@@ -33,6 +34,7 @@ const mapProduct = (item: SupabaseProductRow): Product => ({
   paintingPrice:
     item.preco_pintura != null ? Number(item.preco_pintura) : undefined,
   imageUrl: item.imagem_url || "",
+  imagesByVariant: item.imagens_por_variacao || {},
   category: item.categoria || "Geral",
   description: item.descricao || "",
   availableColors: Array.isArray(item.cores)
@@ -77,6 +79,7 @@ export const productsService = {
         preco: input.price,
         preco_pintura: input.paintingPrice ?? null,
         imagem_url: input.imageUrl,
+        imagens_por_variacao: input.imagesByVariant || {},
         descricao: input.description,
         categoria: input.category,
         material: input.material,
@@ -99,6 +102,8 @@ export const productsService = {
     if (updates.paintingPrice !== undefined)
       patch.preco_pintura = updates.paintingPrice;
     if (updates.imageUrl !== undefined) patch.imagem_url = updates.imageUrl;
+    if (updates.imagesByVariant !== undefined)
+      patch.imagens_por_variacao = updates.imagesByVariant;
     if (updates.description !== undefined)
       patch.descricao = updates.description;
     if (updates.category !== undefined) patch.categoria = updates.category;

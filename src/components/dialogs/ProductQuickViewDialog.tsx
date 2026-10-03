@@ -23,6 +23,8 @@ import type { Product } from "../../shared/interfaces/Product";
 import { useCart } from "../../providers/CartContext";
 import ColorSwatch from "../common/ColorSwatch";
 import { Dialog } from "../ui/Dialog";
+import ProductGallery from "../common/ProductGallery";
+import { getVariantImages } from "../../shared/productImages";
 
 interface ProductQuickViewDialogProps {
   product: Product | null;
@@ -89,7 +91,7 @@ export default function ProductQuickViewDialog({
       name: `${product.name} (${currentScale.label.split(" ")[0]})`,
       price: unitPrice,
       quantity,
-      imageUrl: product.imageUrl,
+      imageUrl: getVariantImages(product, selectedColor, currentFinish.id === "pintura")[0] || product.imageUrl,
       color: `${finishLabel} • ${currentMaterial.label.split(" ")[0]}`,
     });
     onClose();
@@ -105,28 +107,7 @@ export default function ProductQuickViewDialog({
       <Dialog.Content>
         <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
           <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                width: "100%",
-                height: { xs: 210, sm: 340 },
-                borderRadius: { xs: 2, sm: 3 },
-                overflow: "hidden",
-                bgcolor: "background.default",
-                border: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              <Box
-                component="img"
-                src={product.imageUrl}
-                alt={product.name}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-              />
-            </Box>
+            <ProductGallery product={product} color={selectedColor} painted={currentFinish.id === "pintura"} compact />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>

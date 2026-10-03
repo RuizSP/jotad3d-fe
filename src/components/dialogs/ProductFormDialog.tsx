@@ -8,13 +8,18 @@ import {
   Box,
   Typography,
   Chip,
+  Button,
+  IconButton,
 } from "@mui/material";
+import { Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
 import type { DialogProps } from "@toolpad/core";
 import { Dialog } from "../ui/Dialog";
 import { useForm } from "../../hooks/useForm";
 import { useCreateProduct, useUpdateProduct } from "../../hooks/useProducts";
 import { PRODUCT_COLORS, type Product } from "../../shared/interfaces/Product";
 import ColorSwatch from "../common/ColorSwatch";
+import { productImagesService } from "../../services/productImages.service";
 
 interface ProductFormData {
   name: string;
@@ -25,8 +30,24 @@ interface ProductFormData {
   dimensions: string;
   printTimeHours: number | string;
   description: string;
-  imageUrl: string;
 }
+
+type PendingImage = { id: string; url: string; file?: File };
+type ImageGroups = Record<string, PendingImage[]>;
+
+const existingGroups = (product?: Product | null): ImageGroups => {
+  const groups = Object.fromEntries(
+    Object.entries(product?.imagesByVariant || {}).map(([key, urls]) => [
+      key,
+      urls.map((url) => ({ id: crypto.randomUUID(), url })),
+    ]),
+  );
+  if (product?.imageUrl && !Object.values(groups).flat().some((image) => image.url === product.imageUrl)) {
+    const color = product.availableColors?.[0] || "Preto";
+    groups[color] = [{ id: crypto.randomUUID(), url: product.imageUrl }, ...(groups[color] || [])];
+  }
+  return groups;
+};
 
 const CATEGORY_OPTIONS = [
   "Decoração",
@@ -69,9 +90,6 @@ const productValidationSchema = Yup.object().shape({
     .typeError("Tempo inválido")
     .min(0, "Não pode ser negativo"),
   description: Yup.string(),
-  imageUrl: Yup.string()
-    .url("URL de imagem inválida")
-    .required("Informe a URL da imagem"),
 });
 
 export default function ProductFormDialog({
@@ -83,9 +101,11 @@ export default function ProductFormDialog({
   const [selectedColors, setSelectedColors] = useState<string[]>(
     payload?.availableColors || ["Preto", "Branco", "Dourado"],
   );
+  const [images, setImages] = useState<ImageGroups>(() => existingGroups(payload));
+  const [uploading, setUploading] = useState(false);
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
-  const submitting = createProduct.isPending || updateProduct.isPending;
+  const submitting = uploading || createProduct.isPending || updateProduct.isPending;
   const submissionInProgress = useRef(false);
 
   const { data, changeValue, validation, validationErrors, setData } =
@@ -99,7 +119,6 @@ export default function ProductFormDialog({
         dimensions: payload?.dimensions || "",
         printTimeHours: payload?.printTimeHours || "",
         description: payload?.description || "",
-        imageUrl: payload?.imageUrl || "",
       },
       schema: productValidationSchema,
     });
@@ -115,11 +134,11 @@ export default function ProductFormDialog({
         dimensions: payload.dimensions || "",
         printTimeHours: payload.printTimeHours ?? "",
         description: payload.description || "",
-        imageUrl: payload.imageUrl || "",
       });
       setSelectedColors(
         payload.availableColors || ["Preto", "Branco", "Dourado"],
       );
+      setImages(existingGroups(payload));
     }
   }, [payload, setData]);
 
@@ -131,6 +150,26 @@ export default function ProductFormDialog({
     );
   };
 
+  const addImages = (variant: string, files: FileList | null) => {
+    if (!files) return;
+    const valid = Array.from(files).filter((file) => file.type.startsWith("image/") && file.size <= 10 * 1024 * 1024);
+    if (valid.length !== files.length) toast.error("Use imagens de até 10 MB.");
+    setImages((current) => ({
+      ...current,
+      [variant]: [
+        ...(current[variant] || []),
+        ...valid.map((file) => ({ id: crypto.randomUUID(), url: URL.createObjectURL(file), file })),
+      ],
+    }));
+  };
+
+  const removeImage = (variant: string, id: string) => {
+    setImages((current) => ({
+      ...current,
+      [variant]: (current[variant] || []).filter((image) => image.id !== id),
+    }));
+  };
+
   const handleSubmit = async () => {
     if (submissionInProgress.current) return;
 
@@ -138,6 +177,31 @@ export default function ProductFormDialog({
     try {
       const isValid = await validation();
       if (!isValid) return;
+      const variants = [...selectedColors, "Pintada"];
+      if (!variants.some((variant) => images[variant]?.length)) {
+        toast.error("Adicione pelo menos uma imagem.");
+        return;
+      }
+
+      setUploading(true);
+      const uploadedPaths: string[] = [];
+      let saved = false;
+      try {
+        const productId = payload?.id || crypto.randomUUID();
+        const imagesByVariant: Record<string, string[]> = {};
+        for (const variant of variants) {
+          imagesByVariant[variant] = [];
+          for (const image of images[variant] || []) {
+            if (image.file) {
+              const uploaded = await productImagesService.upload(image.file, productId);
+              uploadedPaths.push(uploaded.path);
+              imagesByVariant[variant].push(uploaded.url);
+            } else {
+              imagesByVariant[variant].push(image.url);
+            }
+          }
+        }
+        const imageUrl = variants.flatMap((variant) => imagesByVariant[variant])[0];
 
       const productPayload = {
         name: data.name,
@@ -150,9 +214,10 @@ export default function ProductFormDialog({
         printTimeHours:
           data.printTimeHours === "" ? null : Number(data.printTimeHours),
         description: data.description,
-        imageUrl: data.imageUrl,
+        imageUrl,
+        imagesByVariant,
         availableColors:
-          selectedColors.length > 0 ? selectedColors : ["Preto", "Dourado"],
+          selectedColors,
         inStock: true,
       };
 
@@ -164,10 +229,25 @@ export default function ProductFormDialog({
       } else {
         await createProduct.mutateAsync(productPayload);
       }
-
+      saved = true;
+      if (payload?.id) {
+        const kept = new Set(Object.values(imagesByVariant).flat());
+        const removedPaths = Object.values(payload.imagesByVariant || {})
+          .flat()
+          .filter((url) => !kept.has(url))
+          .map((url) => productImagesService.pathFromUrl(url, payload.id))
+          .filter((path): path is string => Boolean(path));
+        await productImagesService.remove(removedPaths).catch(console.error);
+      }
       await onClose(true);
-    } catch {
-      return;
+      } catch (error) {
+        if (!saved) await productImagesService.remove(uploadedPaths).catch(console.error);
+        toast.error(error instanceof Error ? error.message : "Não foi possível salvar as imagens.");
+      } finally {
+        setUploading(false);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível salvar o produto.");
     } finally {
       submissionInProgress.current = false;
     }
@@ -271,15 +351,6 @@ export default function ProductFormDialog({
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="URL da Imagem da Peça *"
-                placeholder="https://..."
-                value={data.imageUrl}
-                onChange={(e) => changeValue("imageUrl", e.target.value)}
-                {...validationErrors("imageUrl")}
-              />
-            </Grid>
           </Grid>
 
           <TextField
@@ -322,6 +393,31 @@ export default function ProductFormDialog({
               })}
             </Stack>
           </Box>
+          <Stack spacing={2}>
+            <Typography variant="subtitle2">Imagens por variação</Typography>
+            {[...selectedColors, "Pintada"].map((variant) => (
+              <Box key={variant} sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Typography fontWeight={700}>{variant}</Typography>
+                  <Button component="label" size="small" variant="outlined">
+                    Enviar imagens
+                    <input hidden type="file" accept="image/*" multiple onChange={(event) => { addImages(variant, event.target.files); event.target.value = ""; }} />
+                  </Button>
+                </Stack>
+                <Stack direction="row" gap={1} flexWrap="wrap">
+                  {(images[variant] || []).map((image) => (
+                    <Box key={image.id} sx={{ position: "relative" }}>
+                      <Box component="img" src={image.url} alt={variant} sx={{ width: 88, height: 88, objectFit: "cover", borderRadius: 1 }} />
+                      <IconButton size="small" aria-label={`Remover imagem de ${variant}`} onClick={() => removeImage(variant, image.id)} sx={{ position: "absolute", right: 0, top: 0, bgcolor: "background.paper" }}>
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+            <Typography variant="caption" color="text.secondary">A primeira imagem será a capa do catálogo. Use imagens de até 10 MB.</Typography>
+          </Stack>
         </Stack>
       </Dialog.Content>
 

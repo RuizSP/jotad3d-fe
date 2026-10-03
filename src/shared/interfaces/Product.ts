@@ -22,6 +22,7 @@ export interface Product {
   description?: string;
   category: string;
   imageUrl: string;
+  imagesByVariant?: Record<string, string[]>;
   availableColors?: string[];
   dimensions?: string;
   printTimeHours?: number | null;

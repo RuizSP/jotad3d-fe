@@ -28,6 +28,8 @@ import { useProduct } from "../../../hooks/useProducts";
 import type { Product } from "../../../shared/interfaces/Product";
 import ColorSwatch from "../../../components/common/ColorSwatch";
 import CustomQuoteDialog from "../../../components/dialogs/CustomQuoteDialog";
+import ProductGallery from "../../../components/common/ProductGallery";
+import { getVariantImages } from "../../../shared/productImages";
 
 const SCALE_OPTIONS = [
   { label: "Padrão (100%)", multiplier: 1 },
@@ -155,7 +157,7 @@ export default function ProductDetails() {
       name: `${product.name} (${currentScale.label.split(" ")[0]})`,
       price: unitPrice,
       quantity,
-      imageUrl: product.imageUrl,
+      imageUrl: getVariantImages(product, selectedColor, currentFinish.id === "pintura")[0] || product.imageUrl,
       color: `${finishLabel} • ${currentMaterial.label.split(" ")[0]}`,
     });
   };
@@ -188,30 +190,7 @@ export default function ProductDetails() {
           sx={{ mb: { xs: 3, sm: 6 } }}
         >
           <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                width: "100%",
-                aspectRatio: { xs: "1 / 1", sm: "4 / 3", md: "1 / 1" },
-                maxHeight: { xs: 360, sm: 460 },
-                borderRadius: { xs: 2, sm: 4 },
-                overflow: "hidden",
-                border: "1px solid",
-                borderColor: "divider",
-                bgcolor: "background.paper",
-                boxShadow: "0 10px 30px -10px rgba(0,0,0,0.1)",
-              }}
-            >
-              <Box
-                component="img"
-                src={product.imageUrl}
-                alt={product.name}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-              />
-            </Box>
+            <ProductGallery product={product} color={selectedColor} painted={currentFinish.id === "pintura"} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
