@@ -18,7 +18,6 @@ import {
 import { menu } from "../../../../router";
 import type { MenuItem } from "../../../../shared/interfaces/MenuItem";
 import ThemeSwitch from "../../ThemeSwitch";
-import { AppToolbar } from "../AppToolbar";
 import { useAuth } from "../../../../providers/AuthContext";
 
 export default function Applayout() {
@@ -121,13 +120,6 @@ export default function Applayout() {
             />
           </Drawer>
         </>
-      }
-      toolbar={
-        <AppToolbar.Root trigger={<AppToolbar.Trigger />}>
-          <AppToolbar.Container>
-            <AppToolbar.Content />
-          </AppToolbar.Container>
-        </AppToolbar.Root>
       }
     >
       <AppContent>

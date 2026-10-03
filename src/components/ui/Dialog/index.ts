@@ -1,6 +1,5 @@
 import DialogActionCancel from "./DialogActionCancel";
 import DialogActionClose from "./DialogActionClose";
-import DialogActionMinimize from "./DialogActionMinimize";
 import DialogActionSubmit from "./DialogActionSubmit";
 import DialogContent from "./DialogContent";
 import DialogFooter from "./DialogFooter";
@@ -22,6 +21,5 @@ export const Dialog = {
   ActionClose: DialogActionClose,
   ActionSubmit: DialogActionSubmit,
   ActionCancel: DialogActionCancel,
-  ActionMinimize: DialogActionMinimize,
   Trigger: DialogTrigger,
 };

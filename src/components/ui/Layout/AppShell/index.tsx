@@ -4,14 +4,12 @@ import type { ReactNode } from "react";
 interface AppShellProps {
   header: ReactNode;
   sidebar: ReactNode;
-  toolbar: ReactNode;
   children: ReactNode;
 }
 
 export function AppShell({
   header,
   sidebar,
-  toolbar,
   children,
 }: AppShellProps) {
   return (
@@ -49,8 +47,6 @@ export function AppShell({
           {children}
         </Box>
       </Box>
-      {/* Toolbar agora fica fixa na parte inferior */}
-      {toolbar}
     </Box>
   );
 }
