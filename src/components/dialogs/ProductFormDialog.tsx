@@ -20,6 +20,7 @@ interface ProductFormData {
   name: string;
   category: string;
   price: number | string;
+  paintingPrice: number | string;
   material: string;
   dimensions: string;
   printTimeHours: number | string;
@@ -55,9 +56,18 @@ const productValidationSchema = Yup.object().shape({
     .typeError("Preço inválido")
     .positive("Deve ser maior que zero")
     .required("Informe o preço"),
+  paintingPrice: Yup.number()
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .nullable()
+    .typeError("Preço de pintura inválido")
+    .min(0, "Não pode ser negativo"),
   material: Yup.string(),
   dimensions: Yup.string(),
-  printTimeHours: Yup.number().typeError("Tempo inválido").min(0),
+  printTimeHours: Yup.number()
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .nullable()
+    .typeError("Tempo inválido")
+    .min(0, "Não pode ser negativo"),
   description: Yup.string(),
   imageUrl: Yup.string()
     .url("URL de imagem inválida")
@@ -84,6 +94,7 @@ export default function ProductFormDialog({
         name: payload?.name || "",
         category: payload?.category || "Decoração",
         price: payload?.price || "",
+        paintingPrice: payload?.paintingPrice ?? "",
         material: payload?.material || "PLA Silk Premium",
         dimensions: payload?.dimensions || "",
         printTimeHours: payload?.printTimeHours || "",
@@ -99,6 +110,7 @@ export default function ProductFormDialog({
         name: payload.name || "",
         category: payload.category || "Decoração",
         price: payload.price ?? "",
+        paintingPrice: payload.paintingPrice ?? "",
         material: payload.material || "PLA Silk Premium",
         dimensions: payload.dimensions || "",
         printTimeHours: payload.printTimeHours ?? "",
@@ -131,12 +143,12 @@ export default function ProductFormDialog({
         name: data.name,
         category: data.category,
         price: Number(data.price),
-        paintingPrice: payload?.paintingPrice,
+        paintingPrice:
+          data.paintingPrice === "" ? null : Number(data.paintingPrice),
         material: data.material,
         dimensions: data.dimensions || undefined,
-        printTimeHours: data.printTimeHours
-          ? Number(data.printTimeHours)
-          : undefined,
+        printTimeHours:
+          data.printTimeHours === "" ? null : Number(data.printTimeHours),
         description: data.description,
         imageUrl: data.imageUrl,
         availableColors:
@@ -202,7 +214,7 @@ export default function ProductFormDialog({
           </Grid>
 
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 label="Preço Base (R$) *"
                 type="number"
@@ -213,7 +225,17 @@ export default function ProductFormDialog({
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <TextField
+                label="Adicional de Pintura (R$)"
+                type="number"
+                value={data.paintingPrice}
+                onChange={(e) => changeValue("paintingPrice", e.target.value)}
+                {...validationErrors("paintingPrice")}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 select
                 label="Material / Filamento"
@@ -228,13 +250,14 @@ export default function ProductFormDialog({
               </TextField>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 label="Tempo Est. (horas)"
                 type="number"
                 placeholder="6"
                 value={data.printTimeHours}
                 onChange={(e) => changeValue("printTimeHours", e.target.value)}
+                {...validationErrors("printTimeHours")}
               />
             </Grid>
           </Grid>

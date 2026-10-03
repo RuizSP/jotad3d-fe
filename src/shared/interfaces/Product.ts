@@ -18,13 +18,13 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  paintingPrice?: number;
+  paintingPrice?: number | null;
   description?: string;
   category: string;
   imageUrl: string;
   availableColors?: string[];
   dimensions?: string;
-  printTimeHours?: number;
+  printTimeHours?: number | null;
   material?: string;
   inStock?: boolean;
 }

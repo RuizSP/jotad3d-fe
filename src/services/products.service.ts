@@ -16,6 +16,7 @@ interface SupabaseProductRow {
   cores: string[] | null;
   dimensoes: string | null;
   material: string | null;
+  tempo_estimado_horas: number | string | null;
 }
 
 const requireSupabase = () => {
@@ -39,6 +40,10 @@ const mapProduct = (item: SupabaseProductRow): Product => ({
     : DEFAULT_PRODUCT_COLORS,
   dimensions: item.dimensoes || undefined,
   material: item.material || "PLA Premium",
+  printTimeHours:
+    item.tempo_estimado_horas != null
+      ? Number(item.tempo_estimado_horas)
+      : undefined,
   inStock: true,
 });
 
@@ -77,6 +82,7 @@ export const productsService = {
         material: input.material,
         dimensoes: input.dimensions,
         cores: input.availableColors,
+        tempo_estimado_horas: input.printTimeHours ?? null,
       })
       .select("*")
       .single();
@@ -100,6 +106,8 @@ export const productsService = {
     if (updates.dimensions !== undefined) patch.dimensoes = updates.dimensions;
     if (updates.availableColors !== undefined)
       patch.cores = updates.availableColors;
+    if (updates.printTimeHours !== undefined)
+      patch.tempo_estimado_horas = updates.printTimeHours;
 
     const { data, error } = await requireSupabase()
       .from("produtos")

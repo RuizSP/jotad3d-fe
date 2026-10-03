@@ -41,11 +41,6 @@ const MATERIAL_OPTIONS = [
   { label: "PETG Reforçado (+R$ 15)", addPrice: 15 },
 ];
 
-const FINISH_OPTIONS = [
-  { id: "filamento", label: "Cor do Filamento", addPrice: 0 },
-  { id: "pintura", label: "Pintura Manual Artística (+R$ 35)", addPrice: 35 },
-];
-
 export default function ProductQuickViewDialog({
   product,
   open,
@@ -63,9 +58,18 @@ export default function ProductQuickViewDialog({
 
   if (!product) return null;
 
+  const paintingPrice = product.paintingPrice ?? 35;
+  const finishOptions = [
+    { id: "filamento", label: "Cor do Filamento", addPrice: 0 },
+    {
+      id: "pintura",
+      label: `Pintura Manual Artística (+R$ ${paintingPrice.toFixed(2)})`,
+      addPrice: paintingPrice,
+    },
+  ];
   const currentScale = SCALE_OPTIONS[selectedScaleIndex];
   const currentMaterial = MATERIAL_OPTIONS[selectedMaterialIndex];
-  const currentFinish = FINISH_OPTIONS[selectedFinishIndex];
+  const currentFinish = finishOptions[selectedFinishIndex];
   const unitPrice =
     Math.round(
       (product.price * currentScale.multiplier +
@@ -245,7 +249,7 @@ export default function ProductQuickViewDialog({
                   Acabamento da Peça:
                 </Typography>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  {FINISH_OPTIONS.map((fin, idx) => (
+                  {finishOptions.map((fin, idx) => (
                     <Chip
                       key={fin.id}
                       icon={
