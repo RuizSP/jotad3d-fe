@@ -310,30 +310,35 @@ export default function ProductQuickViewDialog({
               ) : (
                 <Box
                   sx={{
-                    p: 1.5,
+                    p: 2,
                     borderRadius: 2,
-                    bgcolor: "grey.50",
-                    border: "1px dashed",
-                    borderColor: "primary.main",
+                    bgcolor: "action.hover",
+                    border: "1px solid",
+                    borderColor: "divider",
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    🎨 <strong>Pintura Manual Artística:</strong> A peça é
-                    tratada com primer automotivo cinza e pintada à mão com
-                    acabamento profissional e verniz. A cor original do
-                    filamento é totalmente recoberta.
-                  </Typography>
+                  <Stack spacing={0.75} mb={2}>
+                    <Typography variant="subtitle2" fontWeight={700}>
+                      Pintura manual artística
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Pintura à mão com primer e verniz. A cor original do
+                      filamento fica recoberta.
+                    </Typography>
+                  </Stack>
                   <TextField
                     size="small"
-                    placeholder="Instruções ou referências de cores (opcional)..."
+                    label="Instruções ou referências de cores"
+                    placeholder="Ex.: tons de azul e detalhes dourados"
                     value={paintInstructions}
                     onChange={(e) => setPaintInstructions(e.target.value)}
                     fullWidth
-                    sx={{ mt: 1, bgcolor: "background.paper" }}
+                    multiline
+                    minRows={2}
+                    helperText="Opcional"
+                    sx={{
+                      "& .MuiOutlinedInput-root": { bgcolor: "background.paper" },
+                    }}
                   />
                 </Box>
               )}
